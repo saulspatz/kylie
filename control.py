@@ -1,6 +1,6 @@
 import tkinter as tk 
-from puzzle import AnswerError, CandidateError
-#from puzzle import Update
+from puzzle import AnswerError
+from puzzle import Update
 from puzzle import Cage
 
 class Control(tk.Frame):
@@ -106,15 +106,10 @@ class Control(tk.Frame):
         if value > puzzle.dim:
             return
 
-        try:
-            updates = puzzle.toggleCandidate(cell, value)
-            for update in updates:
-                update.coords = self.p2b(update.coords)
-            board.postUpdates(updates)
-        except CandidateError as x:
-            errors = [self.p2b(y) for y in x.cells]
-            board.highlight(errors)
-
+        updates = puzzle.toggleCandidate(cell, value)
+        for update in updates:
+            update.coords = self.p2b(update.coords)
+        board.postUpdates(updates)
 
     def allCandidates(self, event):
         # User types a + sign.  Enter all candidates for current cell, except
@@ -218,52 +213,24 @@ class Control(tk.Frame):
             return False
         return True
 
-    def p2b(self, coords):
-        # Convert puzzle coordinates to board coordinates
-
-        x, y = coords
-        return (y-1, x-1)
-
-    def b2p(self, coords):
-        # Convert board coordinates to puzzle coordinates
-
-        x, y = coords
-        return (y+1, x+1)
-
     def getCages(self):
         # Get a list of the cages from the puzzle.
         # Convert them to board coordinates
 
-        for cage in self.parent.puzzle.cages:
-            cells = ['%d%d' % self.p2b(c) for c in cage]
-            yield Cage(cage.op, cage.value, cells, cage.color)
+        for cage in self.parent.puzzle.cages.values():
+            yield cage
 
     def getEntries(self):
         # Get a list of all entries from the puzzle.
-        # Convert them to board coordinates
 
-        updates = self.parent.puzzle.getAllEntries()
-        for update in updates:
-            update.coords = self.p2b(update.coords)
-            yield update
+        return self.parent.puzzle.getAllEntries()
+
 
     def getTime(self):
         return self.parent.timer.time()
 
     def setTime(self, seconds):
         self.parent.timer.setTime(seconds)
-
-    def onClose(self):
-        # Check whether it's OK to close when user attempts to exit
-
-        parent = self.parent
-        try:
-            if parent.puzzle.isDirty:
-                if parent.promptSave() == None:
-                    return
-        except AttributeError:          # user closes app before opening a puzzle file
-            pass
-        parent.win.destroy()
 
     def clearPuzzle(self):
         # Start current puzzle over
@@ -274,6 +241,4 @@ class Control(tk.Frame):
 
         puzzle.restart()
         updates = puzzle.getAllEntries()
-        for u in updates:
-            u.coords = self.p2b(u.coords)
         board.restart(updates)

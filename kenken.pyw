@@ -7,11 +7,11 @@ from subprocess import run
 
 from control   import Control
 from board     import Board
-from puzzle    import Puzzle
+from newpuzzle import Puzzle
 from stopwatch import StopWatch
         
                                        
-class KenClient(object):            
+class KenKen(object):            
     def __init__(self, win, height = 600, width = 600, cursor = 'crosshair', bg = 'white'):    
         self.win = win
         self.win.title('KenKen')        
@@ -27,15 +27,15 @@ class KenClient(object):
         dim = 9
         c = run(['./keen', '--generate', '1', f'{dim}dx'], capture_output=True)
         code = c.stdout.decode()
-        self.puzzle = Puzzle(code)
+        self.puzzle = Puzzle(self, code)
         self.board.draw(dim)
         self.timer.start()
         # self.board.bind('<Configure>', self.board.redraw)
-        # self.puzzle set from Open or Load menu item 
+
                     
 def main():
     root = tk.Tk()                             
-    KenClient(root)
+    KenKen(root)
     root.mainloop()
     
 if __name__ == "__main__":

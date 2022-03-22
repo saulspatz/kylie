@@ -93,9 +93,7 @@ class Puzzle(object):
                     blocks[cell] = union
                 cursor += 1
             cursor += 1
-        # ************************ TODO ********************
-        # Need to find connected components from blocks  *
-        # **************************************************
+       
         cages = {}
         cages = {b:blocks[b] for b in blocks if b== min(blocks[b])}
         pattern =re.compile(r'[adms][0-9]+')

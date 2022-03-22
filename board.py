@@ -8,7 +8,7 @@ SUB = '\u2212'
 MUL ='\xd7'
 DIV = '/'
 
-operation = {"ADD":ADD, "SUB":SUB, "MUL":MUL, "DIV":DIV, "NONE":NONE}
+operation = [ADD, SUB, MUL, DIV, NONE]
 clueFont = ('helevetica', 12, 'bold')
 solutionFont = ('heletica', 20, 'bold')
 candidateFont = ('courier', 10, 'bold')
@@ -35,8 +35,6 @@ class Board(tk.Canvas):
         control = self.parent.control
         for cage in control.getCages():
             self.drawCage(cage)
-        updates = control.getEntries()
-        self.postUpdates(updates)
 
         self.focusFill = None
         self.enterCell((0,0))         # initial focus in upper lefthand corner

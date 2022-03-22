@@ -1,7 +1,8 @@
-from pyparsing import oneOf, OneOrMore, Group, Word, nums, Suppress, pythonStyleComment, ParseException
-import time
-import os.path 
-
+from subprocess import run
+from collections import defaultdict
+from itertools import combinations
+import re
+ 
 class Checkpoint(object):
     # Used to stop undo rollback 
     pass
@@ -15,10 +16,10 @@ class CandidateError(Exception):
         self.cells = cells
         
 class Cage(list):
-    def __init__(self, op, val, cells, color):
+    def __init__(self, op, val, cells):
         self.op = op
         self.value = val
-        self.color = color
+        self.color = None
         for c in cells:
             self.append( (int(c[0]), int(c[1])) )
     
@@ -28,149 +29,128 @@ class Cage(list):
             answer = answer + "%d%d " % (cell[0], cell[1])
         answer = answer + ( '] %d' % self.color )   
         return answer
+
+    def touch(self, other):
+        for cell in self:
+            x,y = cell
+            if (x,y+1) in other: return True
+            if (x,y-1) in other: return True
+            if (x-1, y) in other: return True
+            if (x+1, y) in other: return True
+        return False
             
 class Update(object):
     def __init__(self, coords, ans, cand):
         self.coords, self.answer, self.candidates = coords, ans, cand
 
 class Puzzle(object):            
-    def __init__(self, fin, parent):
-        
-        # fin will be passed to pyparsing.  It must be an open file object
-        
-        def coords(idx):
-            
-            # utility function to convert list index to coordinates
-            
-            return (1+idx // dim, 1 + idx % dim)
-        
-        self.cages        = []
-        self.solution     = {}
-        self.history      = []
+    def __init__(self, parent, codeString):
+        self.code = codeString
+        self.dim = dim = int(codeString[0])
+        self.cages        = {}
+        self.history      = []     # undo stack
         self.answer       = {}
         self.candidates   = {}
-        self.oneCellCages = []
         self.cageID       = {}     # map cell to its cage
+        self.future       = []     # redo stack
         self.parent       = parent
 
-        # use pyparsing to parse input file        
-        
-        try:
-            
-            # first assume that the file is in .ken format
-            
-            p = self.parseKen(fin)           
-            type = 'ken'
-        except ParseException:
-            
-             # attempt parsing in .kip format 
-            
-            fin.seek(0,0)          # rewind
-            p = self.parseKip(fin)
-            type = 'kip'
-        except ParseException:
-            raise
-            
-        self.infile    = fin.name
-        self.isDirty   = False
-        self.dim = dim = int(p.dim)    
-        for i in range(1, dim+1):
-            for j in range(1, dim+1):
-                self.answer[(i,j)] = 0
-                self.candidates[(i,j)] = []
-        
-        # Cells are numbered as (row, col), where 1 <= row, col <= dim
-        
-        for c in p.cages:
-            cage = Cage( c.oper, int(c.value), c.cells, int(c.color) )
-            self.cages.append(cage)
-            for cell in cage:
-                self.cageID[cell] = cage
-            
-            if len(c.cells) == 1:
-                cell = c.cells[0]
-                x = int(cell[0])
-                y = int(cell[1])
-                self.oneCellCages.append( (x, y) )
-                self.answer[(x, y)] = int(c.value)
-                                    
-        for idx, val in enumerate(p.soln):
-            self.solution[coords(idx)] = int(val)
-        
-        if type == 'ken':                    
-            return
-        
-        # input file is in .kip format
-        
-        for idx, val in enumerate(p.answer):
-            self.answer[coords(idx)] = int(val)
-            
-        for idx, val in enumerate(p.candidates):
-            self.candidates[coords(idx)] = [] if val == '0' else [int(c) for c in val]
-            
-        for h in p.history:
-            if h == 'checkpoint':
-                self.history.append(Checkpoint())
-            else:
-                x, y = int(h.coords[0]), int(h.coords[1])
-                ans  = int(h.answer)
-                cand = [int(c) for c in h.candidates]
-                if cand == [0]:
-                    cand = []
-                self.history.append(Update((x,y), ans, cand ))
-                
-        self.parent.control.setTime(int(p.time))            
+        self.makeCages(codeString)
+
+        for x in range(dim):
+            for y in range(dim):
+                self.answer[x,y] = 0  #impossible value
+
+        self.parent.control.setTime(0)            
                  
-    def parseKen(self, fin):
-        # parser for .ken files
-        
-        operator = oneOf("ADD SUB MUL DIV NONE")
-        integer  = Word(nums)
-        lbrack   = Suppress('[')
-        rbrack   = Suppress(']')
-
-        cage = Group( operator("oper") + integer("value") +\
-                      lbrack + OneOrMore(integer)("cells") + rbrack +\
-                      integer("color") )
-        cages = OneOrMore(cage)("cages")         
-        
-        solution  = "Solution" + OneOrMore(integer)("soln")
-        dimension ="dim" + integer("dim")
-
-        puzzle = dimension + cages + solution
-        
-        puzzle.ignore(pythonStyleComment)
-        
-        return puzzle.parseFile(fin, parseAll = True)
-
-    
-    def parseKip(self, fin):
-        # parser for .kip files
-        
-        operator = oneOf("ADD SUB MUL DIV NONE")
-        integer  = Word(nums)
-        lbrack   = Suppress('[')
-        rbrack   = Suppress(']')
+    def makeCages(self, codeString):
+        # Convert the cages codes from Tatham's representation.    
+        dim = self.dim
+        cageCode, operCode = codeString[2:].split(',')
+        pattern = re.compile(r'[_abcdefghijklm]|[0-9]+')
+        groups = pattern.findall(cageCode)
+        symbols = '_abcdefghijklm'
+        code = ''
+        for group in groups:
+            if group in symbols:
+                code += group
+            else:
+                code += (int(group)-1)*code[-1]
+        code = [symbols.index(c) for c in code]
+        blocks = defaultdict(set)
+        for row in range(dim):
+            for col in range(dim):
+                blocks[row,col].add((row, col))
+        cursor = 0
+        for c in code:
+            while c:
+                c -=1
+                if cursor < dim*(dim-1): 
+                    #vertical edge
+                    row = cursor//(dim-1) 
+                    col = cursor%(dim-1)   
+                    p0 =  row, col
+                    p1 =  row, col+1
+                else:
+                    #horizontal edge
+                    col = cursor//(dim-1)-dim 
+                    row = cursor%(dim-1) + 1
+                    p0 = row-1, col
+                    p1 = row, col
+                union = blocks[p0] | blocks[p1]
+                for cell in union:
+                    blocks[cell] = union
+                cursor += 1
+            cursor += 1
        
-        cage = Group( operator("oper") + integer("value") +\
-                      lbrack + OneOrMore(integer)("cells") + rbrack +\
-                      integer("color") )
-        cages = OneOrMore(cage)("cages")
-        
-        update  = Group( integer("coords") + integer("answer") +integer("candidates") )
-        annal   = "checkpoint" ^ update 
-        history = "History" + OneOrMore(annal)("history")
-        
-        dimension  ="dim" + integer("dim")
-        solution   = "Solution" + OneOrMore(integer)("soln")
-        answer     = "Answers"  + OneOrMore(integer)("answer")
-        candidates = "Candidates" + OneOrMore(integer)("candidates")
-        time       = "Time" + integer("time")
+        cages = {}
+        cages = {b:blocks[b] for b in blocks if b== min(blocks[b])}
+        pattern =re.compile(r'[adms][0-9]+')
+        clues = pattern.findall(operCode)
+        try:
+            assert len(cages) == len(clues)
+        except:
+            print(codeString)
+            for item in cages.items():
+                print(item)
+        for id, clue  in zip(sorted(cages), clues):
+            cells = cages[id]
+            for cell in cells:
+                self.cageID[cell] = id
+            op = 'asmd'.index(clue[0])
+            answer = int(clue[1:])
+            self.cages[id] = Cage(op, answer, cells)
+        self.colorCages()
+    def colorCages(self):
+        # Color the cells with at most 6 colors
+        cages = self.cages
+        def color6(graph): 
+            if len(graph)== 1:
+                id = list(graph.keys())[0]
+                cages[id].color = 0
+                return
+            for id in graph:   # The must be a vertex of degree <= 5
+                if len(graph[id]) < 6:
+                    break
+            nbrs = graph.pop(id)  # remove it from the graph
+            for nbr in nbrs:
+                graph[nbr].remove(id)
+            
+            # 6-color the reamining graph, then color the
+            # deleted vertex with a color unused by its neighbors
+             
+            color6(graph)       
+            nbdColors = {cages[n].color for n in nbrs}
+            color = min(set(range(6))-nbdColors)
+            cages[id].color = color
 
-        puzzle = dimension + cages + solution + answer + candidates + history + time 
-        puzzle.ignore(pythonStyleComment)
+        adj = defaultdict(set)
+        for u,v in combinations(cages.keys(), 2):
+            if cages[v].touch(cages[u]):
+                adj[u].add(v)
+                adj[v].add(u)
+        color6(adj)
         
-        return puzzle.parseFile(fin, parseAll = True)
     
     def enterAnswer(self, focus, value):
         
@@ -465,51 +445,7 @@ class Puzzle(object):
             return True
         else:
             return False
-        
-    def save(self, fname):
-        dim = self.dim
-        elapsedTime = self.parent.control.getTime()
-        fout = file(fname, 'w')
-        fout.write('# %s\n' % os.path.split(fname)[1])
-        fout.write('# %s\n' % time.strftime("%A, %d %B %Y %H:%M:%S"))
-        fout.write('dim %d\n' % dim)    
-        for c in self.cages:
-            fout.write(c.__str__() + '\n')
-
-        fout.write('#\nSolution\n')
-        for row in range(1, dim+1):
-            for col in range(1, dim+1):
-                fout.write( '%d ' %self.solution[(row, col)] )
-            fout.write('\n')
-            
-        fout.write('#\nAnswers\n')
-        for row in range(1, dim+1):
-            for col in range(1, dim+1):
-                fout.write( '%d ' %self.answer[(row, col)] )
-            fout.write('\n')
-        
-        fout.write('#\nCandidates\n')
-        for row in range(1, dim+1):
-            for col in range(1, dim+1):
-                cand = self.candidates[(row, col)]
-                cstr = ''.join([str(c) for c in cand])
-                fout.write('%s ' % (cstr if cstr else '0') )
-            fout.write('\n')
-            
-        fout.write('#\nHistory\n')
-        for h in self.history:
-            if isinstance(h, Checkpoint):
-                fout.write('checkpoint\n')
-            else:
-                fout.write('%d%d ' % h.coords)
-                fout.write('%d ' % h.answer)
-                cstr = ''.join([str(c) for c in h.candidates])
-                fout.write('%s\n' % (cstr if cstr else '0') )
-
-        fout.write('#\nTime %d\n' % elapsedTime)
-        
-        fout.close() 
-        
+                
     def restart(self):
         # Clear all user-entered data
         # User wants to start over
@@ -522,13 +458,11 @@ class Puzzle(object):
                     self.answer[(i,j)] = 0
         self.history = []        
         
-
     def goodAnswer(self, cage, focus, value):
         # Precondition: Evey cell in cage, except focus, has an filled in
         # Return true iff filling value into focus makes the
         # arithmetic work out
         
-
         operands = [self.answer[x] for x in cage if x != focus]
         operands += [value]
         if cage.op == "ADD":
