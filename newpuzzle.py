@@ -2,19 +2,21 @@ from subprocess import run
 from collections import defaultdict
 from itertools import combinations
 import re
+
+ADD = '+'
+SUB = '\u2212'
+MUL ='\xd7'
+DIV = '/'
+operation = [ADD, SUB, MUL, DIV]
  
 class Checkpoint(object):
     # Used to stop undo rollback 
     pass
 
 class AnswerError(Exception):
-    def __init__(self, cells):
-        self.cells = cells
-        
-class CandidateError(Exception):
-    def __init__(self, cells):
-        self.cells = cells
-        
+    def __init__(self, cage):
+        self.cells = cage
+                
 class Cage(list):
     def __init__(self, op, val, cells):
         self.op = op
@@ -50,7 +52,7 @@ class Puzzle(object):
         self.cages        = {}
         self.history      = []     # undo stack
         self.answer       = {}
-        self.candidates   = {}
+        self.candidates   = defaultdict(list)
         self.cageID       = {}     # map cell to its cage
         self.future       = []     # redo stack
         self.parent       = parent
@@ -117,7 +119,7 @@ class Puzzle(object):
             cells = cages[id]
             for cell in cells:
                 self.cageID[cell] = id
-            op = 'asmd'.index(clue[0])
+            op = operation['asmd'.index(clue[0])]
             answer = int(clue[1:])
             self.cages[id] = Cage(op, answer, cells)
         self.colorCages()
@@ -173,63 +175,67 @@ class Puzzle(object):
         if answer[focus] == value:
             return []
         
-        row = [x for x in range(1, dim+1) if answer[(x, focus[1])] == value]
-        col = [y for y in range(1, dim+1) if answer[(focus[0], y)] == value]
+        row = [x for x in range(dim) if answer[(x, focus[1])] == value]
+        col = [y for y in range(dim) if answer[(focus[0], y)] == value]
         cells = [(x, focus[1]) for x in row] + [(focus[0], y) for y in col]
         
         if cells:
             raise AnswerError(cells)
         
-        cage = self.cageID[focus]
+        id = self.cageID[focus]
+        cage = self.cages[id]
         
         if len([x for x in cage if x != focus and answer[x]]) == len(cage) - 1:
-            if not self.goodAnswer(cage, focus, value):
+            if not(self.goodAnswer(cage, focus, value)):
                 raise AnswerError(cage)
             
-        self.isDirty = True
         history.append(Checkpoint())
-
-        updates =  self.propagate(focus, value)
-        for upd in updates:
-            history.append( Update(upd.coords, upd.answer, upd.candidates) )
+        # updates =  self.propagate(focus, value)
+        # for upd in updates:
+        #     history.append( Update(upd.coords, upd.answer, upd.candidates) )
+        # return updates
+        ann = self.annal(focus)
+        history.append(ann)
+        answer[focus] = value
+        updates = [self.annal(focus)]
         return updates
     
     def annal(self, focus):
         return Update(focus, self.answer[focus], self.candidates[focus][:])
     
-    def propagate(self, focus, value):
-        # When an answer is entered in a cell, eliminate that value as a 
-        # candidate in all cells in the same line.
-        # In cases where that reduces then number of candidates to one,
-        # enter the answer and recursively propagate it.
-        # All changes are entered in the history.
-        # A list of changes is returned
+    # def propagate(self, focus, value):
+    #     # When an answer is entered in a cell, eliminate that value as a 
+    #     # candidate in all cells in the same line.
+    #     # In cases where that reduces then number of candidates to one,
+    #     # enter the answer and recursively propagate it.
+    #     # All changes are entered in the history.
+    #     # A list of changes is returned
         
-        candidates, answer = self.candidates, self.answer
-        history, dim       = self.history, self.dim
-        x, y = focus
-        updates = []
+    #     candidates, answer = self.candidates, self.answer
+    #     history, dim       = self.history, self.dim
+    #     x, y = focus
+    #     updates = []
         
-        ann = self.annal(focus)
-        history.append(ann)
-        answer[focus] = value
-        updates.append(self.annal(focus))
-        for k in range(1, dim+1):
-            for coords in ( (x, k), (k, y) ):
-                if answer[coords]: 
-                    continue
-                cand = candidates[coords]
-                if  value not in cand: 
-                    continue
-                if len(cand) == 2:                                       
-                    # the element != value equals sum(cand) - value                
-                    updates.extend(self.propagate(coords, sum(cand)-value))
-                else:
-                    ann = self.annal(coords)
-                    history.append(ann)
-                    candidates[coords].remove(value)
-                    updates.append(self.annal(coords))
-        return updates
+    #     ann = self.annal(focus)
+    #     history.append(ann)
+    #     answer[focus] = value
+    #     updates.append(self.annal(focus))
+    #     for k in range(dim):
+    #         for coords in ( (x, k), (k, y) ):
+    #             if answer[coords]: 
+    #                 continue
+    #             cand = candidates[coords]
+    #             if  value not in cand: 
+    #                 continue
+    #             if len(cand) == 2:                                       
+    #                 # the element != value equals sum(cand) - value                
+    #                 updates.extend(self.propagate(coords, sum(cand)-value))
+    #             else:
+    #                 ann = self.annal(coords)
+    #                 history.append(ann)
+    #                 candidates[coords].remove(value)
+    #                 updates.append(self.annal(coords))
+    #     return updates
     
     def allCandidates(self, focus):
         # Enter all possible candidates in cell given by focus
@@ -243,9 +249,9 @@ class Puzzle(object):
         self.isDirty = True
         history.append(Checkpoint())
         history.append(ann)
-        cand = list(range(1, dim+1))
+        cand = list(range(dim))
         x, y = focus
-        for k in range(1, dim+1):
+        for k in range(dim):
             try:
                 cand.remove(answer[x, k])
             except ValueError:
@@ -271,9 +277,7 @@ class Puzzle(object):
         
         candidates, answer, history = self.candidates, self.answer, self.history
         history.append(Checkpoint())  # assume there will be an update
-        dirty = self.isDirty          # save current state
-        self.isDirty = True
-        rng = list(range(1, self.dim+1))
+        rng = list(range(self.dim))
         updates = []
         
         cells = [(x, y) for x in rng for y in rng]
@@ -304,7 +308,6 @@ class Puzzle(object):
                     history.append( Update(upd.coords, upd.answer, upd.candidates) )
         if not updates:
             history.pop()           # remove the checkpoint
-            self.isDirty = dirty    # restore state
             
         return updates
         
@@ -312,10 +315,7 @@ class Puzzle(object):
     def toggleCandidate(self, focus, value):
         # Ignore if answer already in focus cell.
         # Otherwise, toggle the candidate value on or off.
-        
-        # If the user attempte to enter a value that is laready an 
-        # answer  in the same line, raise CandidateError.
-        
+                
         # Enter transaction in history and return a list of updates
         
         history, dim, answer, candidates = \
@@ -327,23 +327,12 @@ class Puzzle(object):
         ann = self.annal(focus)                  
         
         if value in candidates[focus]:            # toggle value off
-            self.isDirty = True
             history.append(Checkpoint())
             history.append(ann)    
             candidates[focus].remove(value)
             update = self.annal(focus)
             return [update]                       # only one update
             
-        conflicts = []                            # toggle value on --
-        x, y = focus                              # check for conflicts
-        for k in range(1, dim+1):
-            for coords in ( (x, k), (k, y) ):
-                if answer[coords] == value: 
-                    conflicts.append(coords)
-        if conflicts:                             # conflict found
-            raise CandidateError(conflicts)       
-        
-        self.isDirty = True
         history.append(Checkpoint())              # no conflicts, toggle value on
         history.append(ann)
         candidates[focus].append(value)
@@ -358,8 +347,8 @@ class Puzzle(object):
         dim = self.dim
         answer, candidates = self.answer, self.candidates
         updates = []
-        for j in range(1, dim+1):
-            for k in range(1, dim+1):
+        for j in range(dim):
+            for k in range(dim):
                 if answer[(j, k)] or candidates[(j, k)]:
                     updates.append(self.annal( (j, k) ))
         return updates        
@@ -410,7 +399,7 @@ class Puzzle(object):
         history.append(Checkpoint())  # assume there will be an update
         dirty = self.isDirty          # save current state
         self.isDirty = True
-        rng = list(range(1, self.dim+1))
+        rng = list(range(self.dim))
         updates = []
         
         cells = [(x, y) for x in rng for y in rng]
@@ -432,8 +421,8 @@ class Puzzle(object):
         
         dim, answer, solution = self.dim, self.answer, self.solution
         errors = []
-        for x in range(1, dim+1):
-            for y in range(1, dim+1):
+        for x in range(dim):
+            for y in range(dim):
                 if answer[(x,y)] and answer[(x,y)] != solution[(x,y)]:
                     errors.append( (x,y) )        
         return errors
@@ -451,8 +440,8 @@ class Puzzle(object):
         # User wants to start over
         
         dim = self.dim
-        for i in range(1, dim+1):
-            for j in range(1, dim+1):
+        for i in range(dim):
+            for j in range(dim):
                 self.candidates[(i,j)] = []
                 if (i, j) not in self.oneCellCages:
                     self.answer[(i,j)] = 0
@@ -463,22 +452,19 @@ class Puzzle(object):
         # Return true iff filling value into focus makes the
         # arithmetic work out
         
+        result = None
         operands = [self.answer[x] for x in cage if x != focus]
         operands += [value]
-        if cage.op == "ADD":
-            return sum(operands) == cage.value
-        if cage.op == "SUB":
-            return max(operands) - min(operands) == cage.value
-        if cage.op == "MUL":
+        if cage.op == ADD:
+            result = sum(operands) == cage.value
+        elif cage.op == SUB:
+            result = max(operands) - min(operands) == cage.value
+        elif cage.op == MUL:
             product = 1
             for x in operands:
                 product *= x
-            return product == cage.value
-        if cage.op == "DIV":
-            return max(operands) // min(operands) == cage.value
-        if cage.op == "NONE":            
-            return operands[0] == cage.value            
+            result  = product == cage.value
+        elif cage.op == DIV:
+            result = max(operands) == min(operands) * cage.value
+        return result
         
-if __name__ == '__main__':
-    p = Puzzle('../docs/31May2009.ken')
-    

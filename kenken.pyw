@@ -9,8 +9,7 @@ from control   import Control
 from board     import Board
 from newpuzzle import Puzzle
 from stopwatch import StopWatch
-        
-                                       
+                                      
 class KenKen(object):            
     def __init__(self, win, height = 600, width = 600, cursor = 'crosshair', bg = 'white'):    
         self.win = win
@@ -30,8 +29,6 @@ class KenKen(object):
         self.puzzle = Puzzle(self, code)
         self.board.draw(dim)
         self.timer.start()
-        # self.board.bind('<Configure>', self.board.redraw)
-
                     
 def main():
     root = tk.Tk()                             

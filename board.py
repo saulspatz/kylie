@@ -2,13 +2,12 @@ import tkinter as tk
 import time
 #from puzzle import Update
 
-NONE = ' '
 ADD = '+'
 SUB = '\u2212'
 MUL ='\xd7'
 DIV = '/'
 
-operation = [ADD, SUB, MUL, DIV, NONE]
+operation = [ADD, SUB, MUL, DIV]
 clueFont = ('helevetica', 12, 'bold')
 solutionFont = ('heletica', 20, 'bold')
 candidateFont = ('courier', 10, 'bold')
@@ -108,7 +107,7 @@ class Board(tk.Canvas):
         kmin = min([k for (j,k) in cage])
         jmin = min([j for(j, k) in cage if k == kmin])
         j, k = x0+cw*jmin+4, y0 + ch*kmin+2
-        self.create_text(j, k, text='%s %s' % (value,operation[op]),
+        self.create_text(j, k, text='%s %s' % (value,op),
                          font = clueFont, anchor = tk.NW, fill = 'black', tag = 'formula')
 
     def clearAll(self):
