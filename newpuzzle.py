@@ -246,7 +246,6 @@ class Puzzle(object):
         if answer[focus]:
             return []
         ann = self.annal(focus)
-        self.isDirty = True
         history.append(Checkpoint())
         history.append(ann)
         cand = list(range(dim))
@@ -363,7 +362,6 @@ class Puzzle(object):
         except IndexError:                    # user tried one too many undos
             return []
         updates = []
-        self.isDirty = True
         while not isinstance(ann, Checkpoint):
             coords             = ann.coords
             answer[coords]     = ann.answer
@@ -386,7 +384,6 @@ class Puzzle(object):
             answer[focus] = 0
         else:
             candidates[focus] = []
-        self.isDirty = True
         history.append(Checkpoint())
         history.append(ann) 
         return [self.annal(focus)]
@@ -397,8 +394,6 @@ class Puzzle(object):
         
         candidates, answer, history = self.candidates, self.answer, self.history
         history.append(Checkpoint())  # assume there will be an update
-        dirty = self.isDirty          # save current state
-        self.isDirty = True
         rng = list(range(self.dim))
         updates = []
         
@@ -411,22 +406,9 @@ class Puzzle(object):
             candidates[cell] = []
             updates.append(self.annal(cell))
         if not updates:
-            history.pop()           # remove the checkpoint
-            self.isDirty = dirty    # restore state
-            
+            history.pop()           # remove the checkpoint          
         return updates
-    
-    def checkAnswers(self):
-        # Compare user's answers to solution, and return a list of errors
         
-        dim, answer, solution = self.dim, self.answer, self.solution
-        errors = []
-        for x in range(dim):
-            for y in range(dim):
-                if answer[(x,y)] and answer[(x,y)] != solution[(x,y)]:
-                    errors.append( (x,y) )        
-        return errors
-    
     def isCompleted(self):
         # Has user entered answer in each cell?
         
@@ -443,8 +425,7 @@ class Puzzle(object):
         for i in range(dim):
             for j in range(dim):
                 self.candidates[(i,j)] = []
-                if (i, j) not in self.oneCellCages:
-                    self.answer[(i,j)] = 0
+                self.answer[(i,j)] = 0
         self.history = []        
         
     def goodAnswer(self, cage, focus, value):

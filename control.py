@@ -15,6 +15,8 @@ class Control(tk.Frame):
         self.bind_class('Board','<space>',  self.clearCell)
         self.bind_class('Board','u',  self.rollBack)
         self.bind_class('Board','U',  self.rollBack)
+        self.bind_class('Board', 's', self.clearPuzzle)
+        self.bind_class('Board', 'S', self.clearPuzzle)
         self.bind_class('Board','<Map>',  self.map)
         self.bind_class('Board','<Unmap>',  self.unmap)
 
@@ -147,7 +149,7 @@ class Control(tk.Frame):
     def setTime(self, seconds):
         self.parent.timer.setTime(seconds)
 
-    def clearPuzzle(self):
+    def clearPuzzle(self, event):
         # Start current puzzle over
         # Do not reset the timer
 
