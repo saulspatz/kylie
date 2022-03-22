@@ -1,7 +1,7 @@
 import tkinter as tk 
-from newpuzzle import AnswerError
-from newpuzzle import Update
-from newpuzzle import Cage
+from puzzle import AnswerError
+from puzzle import Update
+from puzzle import Cage
 
 class Control(tk.Frame):
     def __init__(self, parent, win):

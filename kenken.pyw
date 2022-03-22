@@ -7,7 +7,7 @@ from subprocess import run
 
 from control   import Control
 from board     import Board
-from newpuzzle import Puzzle
+from puzzle import Puzzle
 from stopwatch import StopWatch
                                       
 class KenKen(object):            
