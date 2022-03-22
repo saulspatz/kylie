@@ -1,7 +1,6 @@
-import tkinter as tk 
+import tkinter as tk
+from tkinter import messagebox 
 from puzzle import AnswerError
-from puzzle import Update
-from puzzle import Cage
 
 class Control(tk.Frame):
     def __init__(self, parent, win):
@@ -17,6 +16,8 @@ class Control(tk.Frame):
         self.bind_class('Board','U',  self.rollBack)
         self.bind_class('Board', 's', self.clearPuzzle)
         self.bind_class('Board', 'S', self.clearPuzzle)
+        self.bind_class('Board', 'n', self.newPuzzle)
+        self.bind_class('Board', 'N', self.newPuzzle)
         self.bind_class('Board','<Map>',  self.map)
         self.bind_class('Board','<Unmap>',  self.unmap)
 
@@ -159,3 +160,11 @@ class Control(tk.Frame):
         puzzle.restart()
         updates = puzzle.getAllEntries()
         board.restart(updates)
+
+    def newPuzzle(self, event):
+        parent = self.parent
+        dim = 9
+        if not parent.puzzle.isCompleted():
+            kill = messagebox.askyesno('Unfinished', 'Discard incomplete puzzle?')
+        if kill:
+            parent.newPuzzle(dim)
