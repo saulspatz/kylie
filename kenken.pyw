@@ -19,12 +19,11 @@ class KenKen(object):
         self.timer = StopWatch(win)
         self.timer.pack()
         self.board.pack(side = tk.TOP, expand=tk.YES, fill=tk.BOTH)
-        dim = 9
+        dim = 5
         self.newPuzzle(dim)  # sets self.puzzle
 
     def newPuzzle(self, dim):
-        dim = 9
-        c = run(['./keen', '--generate', '1', f'{dim}dx'], capture_output=True)
+        c = run(['./keen', '--generate', '1', f'{dim}de'], capture_output=True)
         code = c.stdout.decode()
         self.puzzle = Puzzle(self, code)
         self.board.draw(dim)

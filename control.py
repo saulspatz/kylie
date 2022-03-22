@@ -75,7 +75,6 @@ class Control(tk.Frame):
                 self.parent.timer.stop()
                 board.celebrate()
         except AnswerError as x:
-            print('This is x', x)
             board.highlight(x.cells)
         except:
             print('Error occurred')
