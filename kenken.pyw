@@ -1,7 +1,7 @@
 ''' Graphic user interface for kenken puzzle client.
 '''
 
-import tkinter as  tk
+import tkinter as tk
 import  os, re
 from subprocess import run
 

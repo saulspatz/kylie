@@ -14,6 +14,8 @@ class Control(tk.Frame):
         self.bind_class('Board','<space>',  self.clearCell)
         self.bind_class('Board','u',  self.rollBack)
         self.bind_class('Board','U',  self.rollBack)
+        self.bind_class('Board','r',  self.rollForward)
+        self.bind_class('Board','R',  self.rollForward)
         self.bind_class('Board', 's', self.clearPuzzle)
         self.bind_class('Board', 'S', self.clearPuzzle)
         self.bind_class('Board', 'n', self.newPuzzle)
@@ -72,8 +74,8 @@ class Control(tk.Frame):
             return
         
         try:
-            updates = puzzle.enterAnswer(cell, value)
-            board.postUpdates(updates)
+            update = puzzle.enterAnswer(cell, value)
+            board.postUpdate(update)
             if puzzle.isCompleted():
                 self.parent.timer.stop()
                 board.celebrate()
@@ -97,8 +99,8 @@ class Control(tk.Frame):
         if value > puzzle.dim:
             return
 
-        updates = puzzle.toggleCandidate(cell, value)
-        board.postUpdates(updates)
+        update = puzzle.toggleCandidate(cell, value)
+        board.postUpdate(update)
 
     def onClick(self, event):
         board = self.parent.board
@@ -114,14 +116,16 @@ class Control(tk.Frame):
         board  = self.parent.board
         cell   = board.focus
 
-        updates = puzzle.clearCell(cell)
-        board.postUpdates(updates)
+        update = puzzle.clearCell(cell)
+        board.postUpdate(update)
 
     def rollBack(self, event):
-        # Undo history until checkpoint is encountered.
+        update = self.parent.puzzle.undo()
+        self.parent.board.postUpdate(update)
 
-        updates = self.parent.puzzle.undo()
-        self.parent.board.postUpdates(updates)
+    def rollForward(self, event):
+        update = self.parent.puzzle.redo()
+        self.parent.board.postUpdate(update)
 
     def map(self, event):
         timer = self.parent.timer

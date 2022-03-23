@@ -1,6 +1,5 @@
 import tkinter as tk
 import time
-#from puzzle import Update
 
 ADD = '+'
 SUB = '\u2212'
@@ -48,7 +47,8 @@ class Board(tk.Canvas):
         for cage in control.getCages():
             self.drawCage(cage)
         updates = control.getEntries()
-        self.postUpdates(updates)
+        for update in updates:
+            self.postUpdate(update)
         try:
             self.enterCell(self.focus)
         except (AttributeError, TypeError):
@@ -169,22 +169,22 @@ class Board(tk.Canvas):
         self.focusFill = self.itemcget(tag, 'fill')
         self.itemconfigure(tag, fill = 'white')
 
-    def postUpdates(self, updates):
-        # Each update is an object of class Update
+    def postUpdate(self, update):
+        if not update:
+            return
 
-        for update in updates:
-            coords = update.coords
-            cands  = update.candidates
-            answer = update.answer
-            atag = 'a%d%d' % coords
-            ctag = 'c%d%d' % coords
+        coords = update.coords
+        cands  = update.candidates
+        answer = update.answer
+        atag = 'a%d%d' % coords
+        ctag = 'c%d%d' % coords
 
-            if answer:
-                self.itemconfigure(ctag, text = '' )
-                self.itemconfigure(atag, text = str(answer))
-            else:
-                self.itemconfigure(ctag, text = self.candidateString(cands))
-                self.itemconfigure(atag, text = '' )
+        if answer:
+            self.itemconfigure(ctag, text = '' )
+            self.itemconfigure(atag, text = str(answer))
+        else:
+            self.itemconfigure(ctag, text = self.candidateString(cands))
+            self.itemconfigure(atag, text = '' )
 
     def shiftFocus(self, x, y):
         # User clicked the point (x, y)

@@ -1,5 +1,5 @@
 from subprocess import run
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from itertools import combinations
 import re
 
@@ -8,11 +8,8 @@ SUB = '\u2212'
 MUL ='\xd7'
 DIV = '/'
 operation = [ADD, SUB, MUL, DIV]
- 
-class Checkpoint(object):
-    # Used to stop undo rollback 
-    pass
 
+Update = namedtuple('Update', ['coords', 'answer', 'candidates']) 
 class AnswerError(Exception):
     def __init__(self, cage):
         self.cells = cage
@@ -41,9 +38,15 @@ class Cage(list):
             if (x+1, y) in other: return True
         return False
             
-class Update(object):
-    def __init__(self, coords, ans, cand):
-        self.coords, self.answer, self.candidates = coords, ans, cand
+class Journal(object):
+    def __init__(self, coords, before, after):
+        self.coords = coords
+        self.b_ans = before[0]
+        self.b_cand = before[1]
+        self.a_ans = after[0]
+        self.a_cand = after[1]
+    def __str__(self):
+        return f'{self.coords} before: {self.b.ans} {self.b.cand} after: {self.a.ans} {self.a.cand}'
 
 class Puzzle(object):            
     def __init__(self, parent, codeString):
@@ -123,6 +126,7 @@ class Puzzle(object):
             answer = int(clue[1:])
             self.cages[id] = Cage(op, answer, cells)
         self.colorCages()
+
     def colorCages(self):
         # Color the cells with at most 6 colors
         cages = self.cages
@@ -189,16 +193,18 @@ class Puzzle(object):
             if not(self.goodAnswer(cage, focus, value)):
                 raise AnswerError(cage)
             
-        history.append(Checkpoint())
         # updates =  self.propagate(focus, value)
         # for upd in updates:
         #     history.append( Update(upd.coords, upd.answer, upd.candidates) )
         # return updates
-        ann = self.annal(focus)
-        history.append(ann)
+        candidates = self.candidates[focus][:]
+        before = answer[focus], candidates
+        after = value, candidates
+        history.append(Journal(focus, before, after))
         answer[focus] = value
-        updates = [self.annal(focus)]
-        return updates
+        update = self.annal(focus)
+        self.future = []
+        return update
     
     def annal(self, focus):
         return Update(focus, self.answer[focus], self.candidates[focus][:])
@@ -237,85 +243,85 @@ class Puzzle(object):
     #                 updates.append(self.annal(coords))
     #     return updates
     
-    def allCandidates(self, focus):
-        # Enter all possible candidates in cell given by focus
-        # Ignore if answer already in cell
-        # Enter transaction in history and return a list of updates        
+    # def allCandidates(self, focus):
+    #     # Enter all possible candidates in cell given by focus
+    #     # Ignore if answer already in cell
+    #     # Enter transaction in history and return a list of updates        
         
-        history, dim, answer = self.history, self.dim, self.answer
-        if answer[focus]:
-            return []
-        ann = self.annal(focus)
-        history.append(Checkpoint())
-        history.append(ann)
-        cand = list(range(dim))
-        x, y = focus
-        for k in range(dim):
-            try:
-                cand.remove(answer[x, k])
-            except ValueError:
-                pass
-            try:
-                cand.remove(answer[k, y])
-            except ValueError:
-                pass
-        if len(cand) != 1:
-            self.candidates[focus] = cand
-            update = self.annal(focus)
-            return [update]                     # only one update
-        else:
-            updates =  self.propagate(focus, cand[0])
-        for upd in updates:
-            history.append( Update(upd.coords, upd.answer, upd.candidates) )
-        return updates
+    #     history, dim, answer = self.history, self.dim, self.answer
+    #     if answer[focus]:
+    #         return []
+    #     ann = self.annal(focus)
+    #     history.append(Checkpoint())
+    #     history.append(ann)
+    #     cand = list(range(dim))
+    #     x, y = focus
+    #     for k in range(dim):
+    #         try:
+    #             cand.remove(answer[x, k])
+    #         except ValueError:
+    #             pass
+    #         try:
+    #             cand.remove(answer[k, y])
+    #         except ValueError:
+    #             pass
+    #     if len(cand) != 1:
+    #         self.candidates[focus] = cand
+    #         update = self.annal(focus)
+    #         return [update]                     # only one update
+    #     else:
+    #         updates =  self.propagate(focus, cand[0])
+    #     for upd in updates:
+    #         history.append( Update(upd.coords, upd.answer, upd.candidates) )
+    #     return updates
     
-    def fillAllCandidates(self):
-        # For each cell withpout an answer or any candidates, enter
-        # all possible candidates
-        # Enter transaction in history and return a list of updates
+    # def fillAllCandidates(self):
+    #     # For each cell withpout an answer or any candidates, enter
+    #     # all possible candidates
+    #     # Enter transaction in history and return a list of updates
         
-        candidates, answer, history = self.candidates, self.answer, self.history
-        history.append(Checkpoint())  # assume there will be an update
-        rng = list(range(self.dim))
-        updates = []
+    #     candidates, answer, history = self.candidates, self.answer, self.history
+    #     history.append(Checkpoint())  # assume there will be an update
+    #     rng = list(range(self.dim))
+    #     updates = []
         
-        cells = [(x, y) for x in rng for y in rng]
-        for cell in cells:
-            if answer[cell] or candidates[cell]:
-                continue
-            ann = self.annal(cell)
-            history.append(ann)            
-            cand = rng[:]
-            x, y = cell
-            for k in rng:
-                try:
-                    cand.remove(answer[x, k])
-                except ValueError:
-                    pass
-                try:
-                    cand.remove(answer[k, y])
-                except ValueError:
-                    pass
-            if len(cand) != 1:
-                self.candidates[cell] = cand
-                update = self.annal(cell)
-                updates.append(update)
-            else:
-                ups =  self.propagate(cell, cand[0])
-                updates.extend(ups)
-                for upd in ups:
-                    history.append( Update(upd.coords, upd.answer, upd.candidates) )
-        if not updates:
-            history.pop()           # remove the checkpoint
+    #     cells = [(x, y) for x in rng for y in rng]
+    #     for cell in cells:
+    #         if answer[cell] or candidates[cell]:
+    #             continue
+    #         ann = self.annal(cell)
+    #         history.append(ann)            
+    #         cand = rng[:]
+    #         x, y = cell
+    #         for k in rng:
+    #             try:
+    #                 cand.remove(answer[x, k])
+    #             except ValueError:
+    #                 pass
+    #             try:
+    #                 cand.remove(answer[k, y])
+    #             except ValueError:
+    #                 pass
+    #         if len(cand) != 1:
+    #             self.candidates[cell] = cand
+    #             update = self.annal(cell)
+    #             updates.append(update)
+    #         else:
+    #             ups =  self.propagate(cell, cand[0])
+    #             updates.extend(ups)
+    #             for upd in ups:
+    #                 history.append( Update(upd.coords, upd.answer, upd.candidates) )
+    #     if not updates:
+    #         history.pop()           # remove the checkpoint
             
-        return updates
+    #     return updates
         
     
     def toggleCandidate(self, focus, value):
         # Ignore if answer already in focus cell.
         # Otherwise, toggle the candidate value on or off.
                 
-        # Enter transaction in history and return a list of updates
+        # Enter transaction in history and return update record
         
         history, dim, answer, candidates = \
                self.history, self.dim, self.answer, self.candidates
@@ -323,20 +329,17 @@ class Puzzle(object):
         if answer[focus]:                         # answer present
             return []
         
-        ann = self.annal(focus)                  
+        ann = self.annal(focus)
+        before = (ann.answer, ann.candidates)                   
         
-        if value in candidates[focus]:            # toggle value off
-            history.append(Checkpoint())
-            history.append(ann)    
-            candidates[focus].remove(value)
-            update = self.annal(focus)
-            return [update]                       # only one update
-            
-        history.append(Checkpoint())              # no conflicts, toggle value on
-        history.append(ann)
-        candidates[focus].append(value)
-        update = self.annal(focus)
-        return [update]                           # only one update
+        if value in candidates[focus]:            # toggle value off    
+            candidates[focus].remove(value)                                     
+        else:                                     # toggle value on 
+            candidates[focus].append(value)
+        after = (ann.answer, candidates[focus][:])  
+        history.append(Journal(focus, before, after))
+        self.future = []
+        return self.annal(focus)
     
     def getAllEntries(self):
         # Return a list of updates for all cell that have a value (answer or candidate).
@@ -353,22 +356,40 @@ class Puzzle(object):
         return updates        
     
     def undo(self):
-        # Undo items from the history until a checkpoint is encountered
-        # Return a list of the updates made
+        # pop a journal entry of the undo stack and undo it
+        # push it to the redo stack
+        # return the update to post on the view
         
         answer, candidates, history = self.answer, self.candidates, self.history
         try:
-            ann = history.pop()
+            journal = history.pop()
         except IndexError:                    # user tried one too many undos
-            return []
-        updates = []
-        while not isinstance(ann, Checkpoint):
-            coords             = ann.coords
-            answer[coords]     = ann.answer
-            candidates[coords] = ann.candidates
-            updates.append(ann)
-            ann                = history.pop()
-        return updates
+            return None
+    
+        coords             = journal.coords
+        answer[coords]     = journal.b_ans
+        candidates[coords] = journal.b_cand[:]
+        self.future.append(journal)           # redo stack 
+ 
+        return self.annal(coords)
+
+    def redo(self):
+        # pop a journal entry of the redo stack and redo it
+        # push it to the undo stack
+        # return the update to post on the view
+        
+        answer, candidates, future = self.answer, self.candidates, self.future
+        try:
+            journal = future.pop()
+        except IndexError:                    # user tried one too many redos
+            return None
+    
+        coords             = journal.coords
+        answer[coords]     = journal.a_ans
+        candidates[coords] = journal.a_cand[:]
+        self.history.append(journal)           # redo stack 
+ 
+        return self.annal(coords)
     
     def clearCell(self, focus):
         # If there is an answer in the current cell clear it.
@@ -379,35 +400,35 @@ class Puzzle(object):
         if not answer[focus] and not candidates[focus]:
             return []                                # nothing to clear
         
-        ann = self.annal(focus)        
+        ann = self.annal(focus)   
+        before = (ann.answer, ann.candidates)     
         if answer[focus]:
             answer[focus] = 0
         else:
             candidates[focus] = []
-        history.append(Checkpoint())
-        history.append(ann) 
-        return [self.annal(focus)]
+        ann = self.annal(focus)
+        after = (ann.answer, ann.candidates)
+        history.append(Journal(focus, before, after)) 
+        self.future = []
+        return ann
     
-    def clearAllCandidates(self):
-        # For each cell withpout an answer, clear all candidates
-        # Enter transaction in history and return a list of updates
+    # def clearAllCandidates(self):
+    #     # For each cell withpout an answer, clear all candidates
+    #     # Enter transaction in history and return a list of updates
         
-        candidates, answer, history = self.candidates, self.answer, self.history
-        history.append(Checkpoint())  # assume there will be an update
-        rng = list(range(self.dim))
-        updates = []
+    #     candidates, answer, history = self.candidates, self.answer, self.history
+    #     rng = list(range(self.dim))
+    #     updates = []
         
-        cells = [(x, y) for x in rng for y in rng]
-        for cell in cells:
-            if answer[cell] or not candidates[cell]:
-                continue         # nothing to clear 
-            ann = self.annal(cell)
-            history.append(ann)
-            candidates[cell] = []
-            updates.append(self.annal(cell))
-        if not updates:
-            history.pop()           # remove the checkpoint          
-        return updates
+    #     cells = [(x, y) for x in rng for y in rng]
+    #     for cell in cells:
+    #         if answer[cell] or not candidates[cell]:
+    #             continue         # nothing to clear 
+    #         ann = self.annal(cell)
+    #         history.append(ann)
+    #         candidates[cell] = []
+    #         updates.append(self.annal(cell))      
+    #     return updates
         
     def isCompleted(self):
         # Has user entered answer in each cell?
