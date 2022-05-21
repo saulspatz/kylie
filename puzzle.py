@@ -341,19 +341,19 @@ class Puzzle(object):
         self.future = []
         return self.annal(focus)
     
-    def getAllEntries(self):
-        # Return a list of updates for all cell that have a value (answer or candidate).
-        # Used for initializing the board, whether for one-cell cages or loading a
-        # partially-completed solution.
+    # def getAllEntries(self):
+    #     # Return a list of updates for all cell that have a value (answer or candidate).
+    #     # Used for initializing the board, whether for one-cell cages or loading a
+    #     # partially-completed solution.
         
-        dim = self.dim
-        answer, candidates = self.answer, self.candidates
-        updates = []
-        for j in range(dim):
-            for k in range(dim):
-                if answer[(j, k)] or candidates[(j, k)]:
-                    updates.append(self.annal( (j, k) ))
-        return updates        
+    #     dim = self.dim
+    #     answer, candidates = self.answer, self.candidates
+    #     updates = []
+    #     for j in range(dim):
+    #         for k in range(dim):
+    #             if answer[(j, k)] or candidates[(j, k)]:
+    #                 updates.append(self.annal( (j, k) ))
+    #     return updates        
     
     def undo(self):
         # pop a journal entry of the undo stack and undo it

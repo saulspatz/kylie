@@ -1,5 +1,7 @@
 import tkinter as tk
+from tkinter import font
 import time
+
 
 ADD = '+'
 SUB = '\u2212'
@@ -7,9 +9,10 @@ MUL ='\xd7'
 DIV = '/'
 
 operation = [ADD, SUB, MUL, DIV]
-clueFont = ('helevetica', 12, 'bold')
-solutionFont = ('heletica', 20, 'bold')
-candidateFont = ('courier', 10, 'bold')
+clueBase = 10
+solutionBase =20
+candidateBase = 10
+
 cageColor = ('#FFDCA0', '#F0C8C8', '#DCFFFF', '#C4C4FF', '#E5D6B4', '#D6ED84')
 
 class Board(tk.Canvas):
@@ -20,9 +23,10 @@ class Board(tk.Canvas):
         tk.Canvas.__init__(self, win, height=height, width=width,
                         bg=bg, cursor=cursor)
         self.parent = parent
-        msg = '  To begin, open a puzzle file (.ken)\nor load a saved partial solution (.kip)'
-        self.create_text(width//2, height//2, text= msg, font = solutionFont)
-
+        self.clueFont = font.Font(family='JetBrains Mono', size=clueBase, weight='bold')
+        self.solutionFont = font.Font(family='JetBrains Mono',size=solutionBase , weight='bold')
+        self.candidateFont = font.Font(family='JetBrains Mono', size=candidateBase, weight='bold')
+       
     def draw(self, dim):
         self.bind('<Configure>', self.redraw)
         width = self.winfo_width()
@@ -49,6 +53,13 @@ class Board(tk.Canvas):
         updates = control.getEntries()
         for update in updates:
             self.postUpdate(update)
+        scale = event.width/800
+        clueSize = max(clueBase, int(clueBase*scale))
+        solutionSize = max(solutionBase, int(solutionBase*scale))
+        candidateSize = max(candidateBase, int(candidateBase*scale))
+        self.clueFont.configure(size=clueSize)
+        self.solutionFont.configure(size=solutionSize)
+        self.candidateFont.configure(size=candidateSize)
         try:
             self.enterCell(self.focus)
         except (AttributeError, TypeError):
@@ -93,12 +104,12 @@ class Board(tk.Canvas):
             ctag = 'c%d%d' % (j, k)
             x = (e + w) // 2
             y = (n + s) // 2
-            self.create_text(x, y, text='', font = solutionFont, anchor = tk.CENTER,
+            self.create_text(x, y, text='', font = self.solutionFont, anchor = tk.CENTER,
                              tag = atag, fill = 'black')
             self.addtag_withtag('atext', atag)
             x = e - 2
-            y = n + 15
-            self.create_text(x, y, text = '', font = candidateFont, tag = ctag,
+            y = n + 20
+            self.create_text(x, y, text = '', font = self.candidateFont, tag = ctag,
                          anchor = tk.NE, justify = tk.LEFT, fill = 'black')
             self.addtag_withtag('ctext', ctag)
 
@@ -106,9 +117,9 @@ class Board(tk.Canvas):
 
         kmin = min([k for (j,k) in cage])
         jmin = min([j for(j, k) in cage if k == kmin])
-        j, k = x0+cw*jmin+4, y0 + ch*kmin+2
+        j, k = x0+cw*jmin+4, y0 + ch*kmin+5
         self.create_text(j, k, text='%s %s' % (value,op),
-                         font = clueFont, anchor = tk.NW, fill = 'black', tag = 'formula')
+                         font = self.clueFont, anchor = tk.NW, fill = 'black', tag = 'formula')
 
     def clearAll(self):
         objects = self.find_all()
@@ -200,30 +211,27 @@ class Board(tk.Canvas):
     def celebrate(self):
         # Indicate a win by flashing board green
         # Drop the focus
-        # Deactivate the board
 
         all = [(x,y) for x in range(self.dim) for y in range(self.dim)]
         self.highlight(all, 'green', 4)
         tag = 'rect%d%d' % self.focus
         self.itemconfigure(tag, fill = self.focusFill)
-        self.deactivate()
         del(self.focus)
         del(self.focusFill)
 
     def restart(self, updates):
-        # Clear all solution data from the board, and then post the updates
+        # Clear all solution data from the board
         # User wants to start current puzzle over
 
         self.itemconfigure('atext', text = '')
         cstr = self.candidateString([])
         self.itemconfigure('ctext', text = cstr)
-        self.postUpdates(updates)
         self.enterCell((0,0))
         self.activate()
 
     def deactivate(self):
         # Replace the 'Board' bindatg by 'Canvas'.
-        # See defininition of Coontrol in control.py
+        # See defininition of Control in control.py
         # Board will no longer respond to keypresses and mouseclicks
 
         tags = self.bindtags()
@@ -237,7 +245,5 @@ class Board(tk.Canvas):
         tags = self.bindtags()
         tags = (tags[0], 'Board') + tags[2:]
         self.bindtags(tags)
-
-
 
 

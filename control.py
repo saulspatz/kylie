@@ -143,10 +143,10 @@ class Control(tk.Frame):
         for cage in self.parent.puzzle.cages.values():
             yield cage
 
-    def getEntries(self):
-        # Get a list of all entries from the puzzle.
+    # def getEntries(self):
+    #     # Get a list of all entries from the puzzle.
 
-        return self.parent.puzzle.getAllEntries()
+    #     return self.parent.puzzle.getAllEntries()
 
     def getTime(self):
         return self.parent.timer.time()
@@ -162,13 +162,14 @@ class Control(tk.Frame):
         board  = self.parent.board
 
         puzzle.restart()
-        updates = puzzle.getAllEntries()
-        board.restart(updates)
+        # updates = puzzle.getAllEntries()
+        # board.restart(updates)
 
     def newPuzzle(self, event):
         parent = self.parent
         dim = 9
         if not parent.puzzle.isCompleted():
             kill = messagebox.askyesno('Unfinished', 'Discard incomplete puzzle?')
-        if kill:
-            parent.newPuzzle(dim)
+        if not kill:
+            return
+        parent.newPuzzle(dim)

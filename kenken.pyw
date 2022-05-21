@@ -1,4 +1,4 @@
-''' Graphic user interface for kenken puzzle client.
+''' Graphic user interface for kenken puzzle. 
 '''
 
 import tkinter as tk
@@ -11,7 +11,7 @@ from puzzle import Puzzle
 from stopwatch import StopWatch
                                       
 class KenKen(object):            
-    def __init__(self, win, height = 600, width = 600, cursor = 'crosshair', bg = 'white'):    
+    def __init__(self, win, height = 800, width = 800, cursor = 'crosshair', bg = 'white'):    
         self.win = win
         self.win.title('KenKen')        
         self.control = Control(self, win)                
@@ -19,7 +19,7 @@ class KenKen(object):
         self.timer = StopWatch(win)
         self.timer.pack()
         self.board.pack(side = tk.TOP, expand=tk.YES, fill=tk.BOTH)
-        dim = 5
+        dim = 9
         self.newPuzzle(dim)  # sets self.puzzle
 
     def newPuzzle(self, dim):
