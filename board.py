@@ -9,9 +9,9 @@ MUL ='\xd7'
 DIV = '/'
 
 operation = [ADD, SUB, MUL, DIV]
-clueBase = 10
+clueBase = 12
 solutionBase =20
-candidateBase = 10
+candidateBase = 12
 
 cageColor = ('#FFDCA0', '#F0C8C8', '#DCFFFF', '#C4C4FF', '#E5D6B4', '#D6ED84')
 
@@ -50,9 +50,9 @@ class Board(tk.Canvas):
         control = self.parent.control
         for cage in control.getCages():
             self.drawCage(cage)
-        updates = control.getEntries()
-        for update in updates:
-            self.postUpdate(update)
+        # updates = control.getEntries()
+        # for update in updates:
+        #     self.postUpdate(update)
         scale = event.width/800
         clueSize = max(clueBase, int(clueBase*scale))
         solutionSize = max(solutionBase, int(solutionBase*scale))
@@ -108,7 +108,7 @@ class Board(tk.Canvas):
                              tag = atag, fill = 'black')
             self.addtag_withtag('atext', atag)
             x = e - 2
-            y = n + 20
+            y = n + 2
             self.create_text(x, y, text = '', font = self.candidateFont, tag = ctag,
                          anchor = tk.NE, justify = tk.LEFT, fill = 'black')
             self.addtag_withtag('ctext', ctag)
@@ -118,7 +118,7 @@ class Board(tk.Canvas):
         kmin = min([k for (j,k) in cage])
         jmin = min([j for(j, k) in cage if k == kmin])
         j, k = x0+cw*jmin+4, y0 + ch*kmin+5
-        self.create_text(j, k, text='%s %s' % (value,op),
+        self.create_text(j, k, text='%s%s' % (value,op),
                          font = self.clueFont, anchor = tk.NW, fill = 'black', tag = 'formula')
 
     def clearAll(self):
@@ -129,7 +129,6 @@ class Board(tk.Canvas):
     def drawNew(self, dim):
         # Draw a new board
 
-        self.parent.setTitle()
         self.clearAll()
         self.createCells(self.winfo_height(), self.winfo_width(), dim)
 
