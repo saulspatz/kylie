@@ -11,11 +11,12 @@ from puzzle import Puzzle
 from stopwatch import StopWatch
                                       
 class KenKen(object):            
-    def __init__(self, win, height = 800, width = 800, cursor = 'crosshair', bg = 'white'):    
+    def __init__(self, win, height = 1020, width = 1200, cursor = 'crosshair', bg = 'white'):    
         self.win = win
         self.win.title('KenKen')
         icon = tk.Image('photo', file='kenken.png')
-        win.tk.call('wm', 'iconphoto', win._w, icon)        
+        win.tk.call('wm', 'iconphoto', win._w, icon)
+        win.resizable(False, False)        
         self.control = Control(self, win)                
         self.board = Board(self, win, dim = 9, height = height, width = width, bg = bg, cursor=cursor)
         self.timer = StopWatch(win)

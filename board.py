@@ -2,38 +2,40 @@ import tkinter as tk
 from tkinter import font
 import time
 
-
 ADD = '+'
 SUB = '\u2212'
 MUL ='\xd7'
 DIV = '/'
 
 operation = [ADD, SUB, MUL, DIV]
-clueBase = 12
-solutionBase =20
-candidateBase = 12
+clueSize = 16
+solutionSize =36
+candidateSize = 20
+
+baseHeight = 1020
+baseWidth = 1200
+
 
 cageColor = ('#FFDCA0', '#F0C8C8', '#DCFFFF', '#C4C4FF', '#E5D6B4', '#D6ED84')
 
 class Board(tk.Canvas):
     # View
 
-    def __init__(self, parent, win, height = 600, width = 600,
+    def __init__(self, parent, win, height = baseHeight, width = baseWidth,
                  bg = 'white', dim = 9, cursor = 'crosshair'):
         tk.Canvas.__init__(self, win, height=height, width=width,
                         bg=bg, cursor=cursor)
         self.parent = parent
-        self.clueFont = font.Font(family='JetBrains Mono', size=clueBase, weight='bold')
-        self.solutionFont = font.Font(family='JetBrains Mono',size=solutionBase , weight='bold')
-        self.candidateFont = font.Font(family='JetBrains Mono', size=candidateBase, weight='bold')
-       
+        self.clueFont = font.Font(family='JetBrains Mono', size=clueSize, weight='bold')
+        self.solutionFont = font.Font(family='JetBrains Mono',size=solutionSize, weight='bold')
+        self.candidateFont = font.Font(family='JetBrains Mono', size=candidateSize, weight='bold')
+        
     def draw(self, dim):
         self.bind('<Configure>', self.redraw)
         width = self.winfo_width()
         height= self.winfo_height()
         self.dim = dim
         self.createCells(height, width)
-
         control = self.parent.control
         for cage in control.getCages():
             self.drawCage(cage)
@@ -50,16 +52,16 @@ class Board(tk.Canvas):
         control = self.parent.control
         for cage in control.getCages():
             self.drawCage(cage)
-        # updates = control.getEntries()
-        # for update in updates:
-        #     self.postUpdate(update)
-        scale = event.width/800
-        clueSize = max(clueBase, int(clueBase*scale))
-        solutionSize = max(solutionBase, int(solutionBase*scale))
-        candidateSize = max(candidateBase, int(candidateBase*scale))
-        self.clueFont.configure(size=clueSize)
-        self.solutionFont.configure(size=solutionSize)
-        self.candidateFont.configure(size=candidateSize)
+        updates = control.getEntries()
+        for update in updates:
+            self.postUpdate(update)
+        # scale = event.width/baseWidth
+        # clueSize = max(10, int(clueBase*scale))
+        # solutionSize = max(20, int(solutionBase*scale))
+        # candidateSize = max(10, int(candidateBase*scale))
+        # self.clueFont.configure(size=clueSize)
+        # self.solutionFont.configure(size=solutionSize)
+        # self.candidateFont.configure(size=candidateSize)
         try:
             self.enterCell(self.focus)
         except (AttributeError, TypeError):
@@ -107,7 +109,7 @@ class Board(tk.Canvas):
             self.create_text(x, y, text='', font = self.solutionFont, anchor = tk.CENTER,
                              tag = atag, fill = 'black')
             self.addtag_withtag('atext', atag)
-            x = e - 2
+            x = e - 5
             y = n + 2
             self.create_text(x, y, text = '', font = self.candidateFont, tag = ctag,
                          anchor = tk.NE, justify = tk.LEFT, fill = 'black')
@@ -132,7 +134,7 @@ class Board(tk.Canvas):
         self.clearAll()
         self.createCells(self.winfo_height(), self.winfo_width(), dim)
 
-    def highlight(self, cells, color='white', num = 2):
+    def highlight(self, cells, color='yellow', num = 2):
         # Flash given cells in the given highlight color, num times
         # It is assumed that the highlight color will never be the
         # background color of a cell, except perhaps for the cell that
@@ -177,7 +179,7 @@ class Board(tk.Canvas):
         tag = 'rect%d%d' % cell
         self.focus = cell
         self.focusFill = self.itemcget(tag, 'fill')
-        self.itemconfigure(tag, fill = 'white')
+        self.itemconfigure(tag, fill = '#b0b0b0')
 
     def postUpdate(self, update):
         if not update:
@@ -218,7 +220,7 @@ class Board(tk.Canvas):
         del(self.focus)
         del(self.focusFill)
 
-    def restart(self, updates):
+    def restart(self):
         # Clear all solution data from the board
         # User wants to start current puzzle over
 
