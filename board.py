@@ -16,7 +16,13 @@ baseHeight = 1020
 baseWidth = 1200
 
 
-cageColor = ('#FFDCA0', '#F0C8C8', '#DCFFFF', '#C4C4FF', '#E5D6B4', '#D6ED84')
+#cageColor = ('#FFDCA0', '#F0C8C8', '#DCFFFF', '#C4C4FF', '#E5D6B4', '#D6ED84')
+cageColor = ('cornflower blue',
+              'dodger blue',
+              'deep sky blue',
+              'royal blue',
+              'SkyBlue2',
+              'cadet blue')
 
 class Board(tk.Canvas):
     # View
