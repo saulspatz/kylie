@@ -61,13 +61,6 @@ class Board(tk.Canvas):
         updates = control.getEntries()
         for update in updates:
             self.postUpdate(update)
-        # scale = event.width/baseWidth
-        # clueSize = max(10, int(clueBase*scale))
-        # solutionSize = max(20, int(solutionBase*scale))
-        # candidateSize = max(10, int(candidateBase*scale))
-        # self.clueFont.configure(size=clueSize)
-        # self.solutionFont.configure(size=solutionSize)
-        # self.candidateFont.configure(size=candidateSize)
         try:
             self.enterCell(self.focus)
         except (AttributeError, TypeError):
@@ -185,7 +178,7 @@ class Board(tk.Canvas):
         tag = 'rect%d%d' % cell
         self.focus = cell
         self.focusFill = self.itemcget(tag, 'fill')
-        self.itemconfigure(tag, fill = '#b0b0b0')
+        self.itemconfigure(tag, fill = 'khaki3')
 
     def postUpdate(self, update):
         if not update:
