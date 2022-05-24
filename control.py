@@ -169,6 +169,6 @@ class Control(tk.Frame):
         dim = 9
         if not parent.puzzle.isCompleted():
             kill = messagebox.askyesno('Unfinished', 'Discard incomplete puzzle?')
-        if not kill:
-            return
+            if not kill:
+                return
         parent.newPuzzle(dim)
