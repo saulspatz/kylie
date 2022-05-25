@@ -31,14 +31,14 @@ class Control(tk.Frame):
 
     def arrowUp(self, event):
         board = self.parent.board
-        focus = board.focus
+        focus = board.current
         if focus[1] == 0:       # already in top row
             return
         board.enterCell( (focus[0], focus[1]-1) )
 
     def arrowDown(self, event):
         board = self.parent.board
-        focus = board.focus
+        focus = board.current
         dim   = board.dim
         if focus[1] == dim-1:       # already in bottom row
             return
@@ -46,14 +46,14 @@ class Control(tk.Frame):
 
     def arrowLeft(self, event):
         board = self.parent.board
-        focus = board.focus
+        focus = board.current
         if focus[0] == 0:       # already in leftmost column
             return
         board.enterCell( (focus[0]-1, focus[1]) )
 
     def arrowRight(self, event):
         board = self.parent.board
-        focus = board.focus
+        focus = board.current
         dim   = board.dim
         if focus[0] == dim-1:       # already in rightmost column
             return
@@ -68,7 +68,7 @@ class Control(tk.Frame):
         value       = int(event.keysym[-1])
         puzzle      = self.parent.puzzle
         board       = self.parent.board
-        cell        = board.focus
+        cell        = board.current
 
         if value > puzzle.dim:
             return
@@ -93,7 +93,7 @@ class Control(tk.Frame):
         value  = int(event.char)
         puzzle = self.parent.puzzle
         board  = self.parent.board
-        cell   = board.focus
+        cell   = board.current
 
 
         if value > puzzle.dim:
@@ -114,7 +114,7 @@ class Control(tk.Frame):
 
         puzzle = self.parent.puzzle
         board  = self.parent.board
-        cell   = board.focus
+        cell   = board.current
 
         update = puzzle.clearCell(cell)
         board.postUpdate(update)

@@ -45,8 +45,7 @@ class Board(tk.Canvas):
         control = self.parent.control
         for cage in control.getCages():
             self.drawCage(cage)
-
-        self.focusFill = None
+        self.current = (0,0)
         self.enterCell((0,0))         # initial focus in upper lefthand corner
         self.focus_set()              # make canvas respond to keystrokes
 
@@ -62,7 +61,7 @@ class Board(tk.Canvas):
         for update in updates:
             self.postUpdate(update)
         try:
-            self.enterCell(self.focus)
+            self.enterCell(self.current)
         except (AttributeError, TypeError):
             pass
 
@@ -70,18 +69,20 @@ class Board(tk.Canvas):
         dim = self.dim
         self.cellWidth  =  cw = (width - 10 ) // dim
         self.cellHeight = ch = (height - 10 ) // dim
-        self.x0 = ( width - dim * cw ) // 2          # cell origin is (x0, y0)
-        self.y0 = ( height - dim * ch ) // 2
+        x0 = self.x0 = ( width - dim * cw ) // 2          # cell origin is (x0, y0)
+        y0= self.y0 = ( height - dim * ch ) // 2
 
         for j, x in enumerate(range(self.x0, self.x0+dim*cw, cw)):
             for k, y in enumerate(range(self.y0,  self.y0+dim*ch, ch)):
                 tag = 'rect%d%d' % (j, k)
                 self.create_rectangle(x, y, x +cw, y+ ch, tag = tag)
+        self.create_polygon(x0,y0+ch, x0+cw//4, y0+ch, x0, y0+3*ch//4,
+                        fill = 'khaki3', tag = 'cursor')
 
     def drawCage(self, cage):
         x0      = self.x0
         y0      = self.y0
-        ch      = self.cellHeight
+        ch      = self.cellHeight 
         cw      = self.cellWidth
         op      = cage.op
         value   = cage.value
@@ -127,26 +128,17 @@ class Board(tk.Canvas):
         for object in objects:
             self.delete(object)
 
-    def drawNew(self, dim):
-        # Draw a new board
-
-        self.clearAll()
-        self.createCells(self.winfo_height(), self.winfo_width(), dim)
-
     def highlight(self, cells, color='yellow', num = 2):
         # Flash given cells in the given highlight color, num times
         # It is assumed that the highlight color will never be the
-        # background color of a cell, except perhaps for the cell that
-        # has the focus.
+        # background color of a cell.
 
         rects = []
         for cell in cells:
             tag = 'rect%d%d' %cell
             bg  = self.itemcget(tag, 'fill')
-            if bg != color:
-                rects.append((tag, bg, color))
-            else:
-                rects.append((tag, color, self.focusFill))
+            rects.append((tag, bg, color))
+
         for _ in range(num):
             for tag, bg, col in rects:
                 self.itemconfigure(tag, fill = col)
@@ -168,17 +160,15 @@ class Board(tk.Canvas):
     def enterCell(self, cell):
         # Cell is (col, row) pair
         # Give focus to cell
-        # Sets self.focus and self.focusFill
+        # Sets self.current
 
-        try:                                # release old focus, if any
-            tag = 'rect%d%d' % self.focus
-            self.itemconfigure(tag, fill = self.focusFill)
-        except TypeError:
-            pass
         tag = 'rect%d%d' % cell
-        self.focus = cell
-        self.focusFill = self.itemcget(tag, 'fill')
-        self.itemconfigure(tag, fill = 'khaki3')
+        old = self.current
+        deltaX = (cell[0] - old[0])*self.cellWidth
+        deltaY = (cell[1] - old[1])*self.cellHeight
+
+        self.current = cell
+        self.move('cursor', deltaX, deltaY)
 
     def postUpdate(self, update):
         if not update:
@@ -213,12 +203,9 @@ class Board(tk.Canvas):
         # Drop the focus
 
         all = [(x,y) for x in range(self.dim) for y in range(self.dim)]
+        self.delete('cursor')
         self.highlight(all, 'green', 4)
-        tag = 'rect%d%d' % self.focus
-        self.itemconfigure(tag, fill = self.focusFill)
-        del(self.focus)
-        del(self.focusFill)
-
+        
     def restart(self):
         # Clear all solution data from the board
         # User wants to start current puzzle over
@@ -226,6 +213,7 @@ class Board(tk.Canvas):
         self.itemconfigure('atext', text = '')
         cstr = self.candidateString([])
         self.itemconfigure('ctext', text = cstr)
+        self.current = (0,0)
         self.enterCell((0,0))
         self.activate()
 
