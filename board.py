@@ -21,8 +21,8 @@ cageColor = ('cornflower blue',
               'dodger blue',
               'deep sky blue',
               'royal blue',
-              'cyan3',
-              'steel blue',)
+              'steel blue',
+              'cyan3',)
 
 class Board(tk.Canvas):
     # View
