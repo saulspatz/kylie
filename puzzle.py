@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from itertools import combinations
+from SLcolor import greedyColor
 import re
 
 ADD = '+'
@@ -154,9 +155,17 @@ class Puzzle(object):
             if cages[v].touch(cages[u]):
                 adj[u].add(v)
                 adj[v].add(u)
-        color6(adj)
+
+        graph = { }
+        for v in adj:
+            graph[v] =list(adj[v])
+        greed = greedyColor(graph, 4, 50)
+        if greed:
+            for id in greed:
+                cages[id].color = greed[id]-1
+        else:
+            color6(adj)
         
-    
     def enterAnswer(self, focus, value):
         
         # User enters an answer in a cell.
