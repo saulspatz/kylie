@@ -213,7 +213,6 @@ class Board(tk.Canvas):
         self.itemconfigure('atext', text = '')
         cstr = self.candidateString([])
         self.itemconfigure('ctext', text = cstr)
-        self.current = (0,0)
         self.enterCell((0,0))
         self.activate()
 
