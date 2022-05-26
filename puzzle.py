@@ -1,4 +1,3 @@
-from subprocess import run
 from collections import defaultdict, namedtuple
 from itertools import combinations
 import re
