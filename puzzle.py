@@ -156,7 +156,7 @@ class Puzzle(object):
                 adj[u].add(v)
                 adj[v].add(u)
 
-        graph = { }
+        graph = self.graph =  { }
         for v in adj:
             graph[v] =list(adj[v])
         greed = greedyColor(graph, 4, 50)
