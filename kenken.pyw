@@ -2,7 +2,6 @@
 ''' Graphic user interface for kenken puzzle. 
 '''
 import tkinter as tk
-import  os, re
 from subprocess import run
 
 from control   import Control
