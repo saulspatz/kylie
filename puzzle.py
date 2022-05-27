@@ -1,7 +1,7 @@
 from collections import defaultdict, namedtuple
 from itertools import combinations
-from SLcolor import greedyColor
 import re
+from subprocess import run
 
 ADD = '+'
 SUB = '\u2212'
@@ -128,7 +128,12 @@ class Puzzle(object):
         self.colorCages()
 
     def colorCages(self):
-        # Color the cells with at most 6 colors
+        '''
+        Attempt to color the graph with 4 colors, using
+        algorithm HybridEA from "A Guide to Graph Colouring" by 
+        R.M.R. Lewis.  In the unlikely event that the resulting
+        coloring uses more than 6 colors, fall back on color6
+        '''
         cages = self.cages
         def color6(graph): 
             if len(graph)== 1:
@@ -156,15 +161,31 @@ class Puzzle(object):
                 adj[u].add(v)
                 adj[v].add(u)
 
-        graph = self.graph =  { }
-        for v in adj:
-            graph[v] =list(adj[v])
-        greed = greedyColor(graph, 4, 50)
-        if greed:
-            for id in greed:
-                cages[id].color = greed[id]-1
+        if self.hybrid(adj):
+            pass
         else:
             color6(adj)
+
+    def hybrid(self, nbrs):
+        # HybridEA
+        ids = sorted(nbrs.keys())
+        indices = {id :ids.index(id)+1 for id in ids}
+        graph = {indices[v]:[indices[v] for v in nbrs[v]] for v in nbrs}
+            
+        vertices = len(graph)
+        edges = sum(len(val) for val in graph.values())//2
+        with open('dimacs.txt', 'w') as fout:
+            fout.write(f'p edge {vertices} {edges}\n')
+            for vertex in graph:
+                for nbr in (n for n in graph[vertex] if n > vertex):
+                    fout.write(f'e {vertex} {nbr}\n')
+        run(['./HybridEA', '-T', '4', 'dimacs.txt'], capture_output=True)       
+        coloring  = list(map(int, open('solution.txt').readlines()))[1:]
+        if max(coloring) > 5:
+            return False
+        for id, color in zip(ids, coloring):
+            self.cages[id].color = color
+        return True
         
     def enterAnswer(self, focus, value):
         
