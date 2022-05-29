@@ -121,11 +121,11 @@ class Control(tk.Frame):
 
     def rollBack(self, event):
         update = self.parent.puzzle.undo()
-        self.parent.board.postUpdate(update)
+        self.parent.board.undo(update)
 
     def rollForward(self, event):
         update = self.parent.puzzle.redo()
-        self.parent.board.postUpdate(update)
+        self.parent.board.redo(update)
 
     def map(self, event):
         timer = self.parent.timer

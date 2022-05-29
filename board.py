@@ -48,7 +48,6 @@ class Board(tk.Canvas):
         self.current = (0,0)
         self.enterCell((0,0))         # initial focus in upper lefthand corner
         self.focus_set()              # make canvas respond to keystrokes
-
         self.activate()               # activate event bindings
 
     def redraw(self, event):
@@ -187,6 +186,15 @@ class Board(tk.Canvas):
             self.itemconfigure(ctag, text = self.candidateString(cands))
             self.itemconfigure(atag, text = '' )
 
+    def undo(self, update):
+        self.postUpdate(update)
+        self.itemconfigure('cursor', state = tk.NORMAL)
+
+    def redo(self, update):
+        self.postUpdate(update)
+        if self.parent.puzzle.isCompleted():
+            self.itemconfigure('cursor', state = tk.HIDDEN)
+
     def shiftFocus(self, x, y):
         # User clicked the point (x, y)
 
@@ -203,7 +211,7 @@ class Board(tk.Canvas):
         # Drop the focus
 
         all = [(x,y) for x in range(self.dim) for y in range(self.dim)]
-        self.delete('cursor')
+        self.itemconfigure('cursor', state=tk.HIDDEN)
         self.highlight(all, 'green', 4)
         
     def restart(self):
