@@ -16,13 +16,19 @@ baseHeight = 1020
 baseWidth = 1200
 
 
-#cageColor = ('#FFDCA0', '#F0C8C8', '#DCFFFF', '#C4C4FF', '#E5D6B4', '#D6ED84')
-cageColor = ('cornflower blue',
-              'dodger blue',
-              'deep sky blue',
-              'royal blue',
-              'steel blue',
-              'cyan3',)
+# cageColor = ('DarkSlateGray',
+#               'dark olive green',
+#               'gray25',
+#               'wheat4',
+#               'steel blue',
+#               'cyan3',)
+
+cageColor = ('#2e2b23',
+             '#353126',   
+             '#423d33',
+             '#49443a',
+             '#504a40',
+             '#625d52')
 
 class Board(tk.Canvas):
     # View
@@ -76,7 +82,7 @@ class Board(tk.Canvas):
                 tag = 'rect%d%d' % (j, k)
                 self.create_rectangle(x, y, x +cw, y+ ch, tag = tag)
         self.create_polygon(x0,y0+ch, x0+cw//4, y0+ch, x0, y0+3*ch//4,
-                        fill = 'khaki3', tag = 'cursor')
+                        fill = 'khaki4', tag = 'cursor')
 
     def drawCage(self, cage):
         x0      = self.x0
@@ -87,6 +93,7 @@ class Board(tk.Canvas):
         value   = cage.value
         bground = cageColor[cage.color]
 
+        clueFill = 'gray51'
         for (j, k) in cage:
             self.itemconfigure('rect%d%d' % (j, k), fill = bground)
             w = x0 + j*cw
@@ -111,7 +118,7 @@ class Board(tk.Canvas):
             x = e - 5
             y = n + 2
             self.create_text(x, y, text = '', font = self.candidateFont, tag = ctag,
-                         anchor = tk.NE, justify = tk.LEFT, fill = 'black')
+                         anchor = tk.NE, justify = tk.LEFT, fill = clueFill)
             self.addtag_withtag('ctext', ctag)
 
         # formula in upper lefthand corner
@@ -120,7 +127,7 @@ class Board(tk.Canvas):
         jmin = min([j for(j, k) in cage if k == kmin])
         j, k = x0+cw*jmin+4, y0 + ch*kmin+5
         self.create_text(j, k, text='%s%s' % (value,op),
-                         font = self.clueFont, anchor = tk.NW, fill = 'black', tag = 'formula')
+                         font = self.clueFont, anchor = tk.NW, fill = clueFill, tag = 'formula')
 
     def clearAll(self):
         objects = self.find_all()
