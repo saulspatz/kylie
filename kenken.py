@@ -25,7 +25,7 @@ class KenKen(object):
         self.newPuzzle(dim)  # sets self.puzzle
 
     def newPuzzle(self, dim):
-        c = run(['./keen', '--generate', '1', f'{dim}de'], capture_output=True)
+        c = run(['./keen', '--generate', '1', f'{dim}dx'], capture_output=True)
         code = c.stdout.decode()
         self.puzzle = Puzzle(self, code)
         self.board.draw(dim)
