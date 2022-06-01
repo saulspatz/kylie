@@ -222,10 +222,6 @@ class Puzzle(object):
             if not(self.goodAnswer(cage, focus, value)):
                 raise AnswerError(cage)
             
-        # updates =  self.propagate(focus, value)
-        # for upd in updates:
-        #     history.append( Update(upd.coords, upd.answer, upd.candidates) )
-        # return updates
         candidates = self.candidates[focus][:]
         before = answer[focus], candidates
         after = value, candidates
@@ -238,122 +234,14 @@ class Puzzle(object):
     def annal(self, focus):
         return Update(focus, self.answer[focus], self.candidates[focus][:])
     
-    # def propagate(self, focus, value):
-    #     # When an answer is entered in a cell, eliminate that value as a 
-    #     # candidate in all cells in the same line.
-    #     # In cases where that reduces then number of candidates to one,
-    #     # enter the answer and recursively propagate it.
-    #     # All changes are entered in the history.
-    #     # A list of changes is returned
-        
-    #     candidates, answer = self.candidates, self.answer
-    #     history, dim       = self.history, self.dim
-    #     x, y = focus
-    #     updates = []
-        
-    #     ann = self.annal(focus)
-    #     history.append(ann)
-    #     answer[focus] = value
-    #     updates.append(self.annal(focus))
-    #     for k in range(dim):
-    #         for coords in ( (x, k), (k, y) ):
-    #             if answer[coords]: 
-    #                 continue
-    #             cand = candidates[coords]
-    #             if  value not in cand: 
-    #                 continue
-    #             if len(cand) == 2:                                       
-    #                 # the element != value equals sum(cand) - value                
-    #                 updates.extend(self.propagate(coords, sum(cand)-value))
-    #             else:
-    #                 ann = self.annal(coords)
-    #                 history.append(ann)
-    #                 candidates[coords].remove(value)
-    #                 updates.append(self.annal(coords))
-    #     return updates
-    
-    # def allCandidates(self, focus):
-    #     # Enter all possible candidates in cell given by focus
-    #     # Ignore if answer already in cell
-    #     # Enter transaction in history and return a list of updates        
-        
-    #     history, dim, answer = self.history, self.dim, self.answer
-    #     if answer[focus]:
-    #         return []
-    #     ann = self.annal(focus)
-    #     history.append(Checkpoint())
-    #     history.append(ann)
-    #     cand = list(range(dim))
-    #     x, y = focus
-    #     for k in range(dim):
-    #         try:
-    #             cand.remove(answer[x, k])
-    #         except ValueError:
-    #             pass
-    #         try:
-    #             cand.remove(answer[k, y])
-    #         except ValueError:
-    #             pass
-    #     if len(cand) != 1:
-    #         self.candidates[focus] = cand
-    #         update = self.annal(focus)
-    #         return [update]                     # only one update
-    #     else:
-    #         updates =  self.propagate(focus, cand[0])
-    #     for upd in updates:
-    #         history.append( Update(upd.coords, upd.answer, upd.candidates) )
-    #     return updates
-    
-    # def fillAllCandidates(self):
-    #     # For each cell withpout an answer or any candidates, enter
-    #     # all possible candidates
-    #     # Enter transaction in history and return a list of updates
-        
-    #     candidates, answer, history = self.candidates, self.answer, self.history
-    #     history.append(Checkpoint())  # assume there will be an update
-    #     rng = list(range(self.dim))
-    #     updates = []
-        
-    #     cells = [(x, y) for x in rng for y in rng]
-    #     for cell in cells:
-    #         if answer[cell] or candidates[cell]:
-    #             continue
-    #         ann = self.annal(cell)
-    #         history.append(ann)            
-    #         cand = rng[:]
-    #         x, y = cell
-    #         for k in rng:
-    #             try:
-    #                 cand.remove(answer[x, k])
-    #             except ValueError:
-    #                 pass
-    #             try:
-    #                 cand.remove(answer[k, y])
-    #             except ValueError:
-    #                 pass
-    #         if len(cand) != 1:
-    #             self.candidates[cell] = cand
-    #             update = self.annal(cell)
-    #             updates.append(update)
-    #         else:
-    #             ups =  self.propagate(cell, cand[0])
-    #             updates.extend(ups)
-    #             for upd in ups:
-    #                 history.append( Update(upd.coords, upd.answer, upd.candidates) )
-    #     if not updates:
-    #         history.pop()           # remove the checkpoint
-            
-    #     return updates
-        
-    
     def toggleCandidate(self, focus, value):
         # Ignore if answer already in focus cell.
         # Otherwise, toggle the candidate value on or off.
                 
         # Enter transaction in history and return update record
         
-        history, dim, answer, candidates = \
-               self.history, self.dim, self.answer, self.candidates
+        history, answer, candidates = \
+               self.history, self.answer, self.candidates
         
         if answer[focus]:                         # answer present
             return []
@@ -439,33 +327,12 @@ class Puzzle(object):
         history.append(Journal(focus, before, after)) 
         self.future = []
         return ann
-    
-    # def clearAllCandidates(self):
-    #     # For each cell withpout an answer, clear all candidates
-    #     # Enter transaction in history and return a list of updates
-        
-    #     candidates, answer, history = self.candidates, self.answer, self.history
-    #     rng = list(range(self.dim))
-    #     updates = []
-        
-    #     cells = [(x, y) for x in rng for y in rng]
-    #     for cell in cells:
-    #         if answer[cell] or not candidates[cell]:
-    #             continue         # nothing to clear 
-    #         ann = self.annal(cell)
-    #         history.append(ann)
-    #         candidates[cell] = []
-    #         updates.append(self.annal(cell))      
-    #     return updates
-        
+            
     def isCompleted(self):
         # Has user entered answer in each cell?
         
-        if len([x for x in list(self.answer.values()) if x]) == self.dim ** 2:
-            return True
-        else:
-            return False
-                
+        return len([x for x in list(self.answer.values()) if x]) == self.dim ** 2
+
     def restart(self):
         # Clear all user-entered data
         # User wants to start over
