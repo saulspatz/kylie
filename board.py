@@ -75,7 +75,7 @@ class Board(tk.Canvas):
             for k, y in enumerate(range(self.y0,  self.y0+dim*ch, ch)):
                 tag = 'rect%d%d' % (j, k)
                 self.create_rectangle(x, y, x +cw, y+ ch, tag = tag)
-        self.create_polygon(x0,y0+ch, x0+cw//4, y0+ch, x0, y0+3*ch//4,
+        self.create_polygon(x0,y0+ch//2, x0+cw//4, y0+3*ch//4, x0, y0+ch,
                         fill = 'khaki3', tag = 'cursor')
 
     def drawCage(self, cage):
