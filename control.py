@@ -157,6 +157,11 @@ class Control(tk.Frame):
         # Start current puzzle over
         # Do not reset the timer
 
+        # No use case of restarting a 
+        # completed puzzle with no timer
+        if self.parent.puzzle.isCompleted():
+            self.clearPuzzle(event)
+
         puzzle = self.parent.puzzle
         board  = self.parent.board
 

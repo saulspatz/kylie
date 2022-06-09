@@ -228,6 +228,7 @@ class Board(tk.Canvas):
         # Clear all solution data from the board
         # User wants to start current puzzle over
 
+        self.itemconfigure('cursor', state=tk.NORMAL)
         self.itemconfigure('atext', text='')
         cstr = self.candidateString([])
         self.itemconfigure('ctext', text=cstr)
