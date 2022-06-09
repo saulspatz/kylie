@@ -16,10 +16,12 @@ class Control(tk.Frame):
         self.bind_class('Board','U',  self.rollBack)
         self.bind_class('Board','r',  self.rollForward)
         self.bind_class('Board','R',  self.rollForward)
-        self.bind_class('Board', 's', self.clearPuzzle)
-        self.bind_class('Board', 'S', self.clearPuzzle)
+        self.bind_class('Board', 's', self.restartPuzzle)
+        self.bind_class('Board', 'S', self.restartPuzzle)
         self.bind_class('Board', 'n', self.newPuzzle)
         self.bind_class('Board', 'N', self.newPuzzle)
+        self.bind_class('Board', 'c', self.clearPuzzle)
+        self.bind_class('Board', 'C', self.clearPuzzle)
         self.bind_class('Board','<Map>',  self.map)
         self.bind_class('Board','<Unmap>',  self.unmap)
 
@@ -148,13 +150,10 @@ class Control(tk.Frame):
 
         return self.parent.puzzle.getAllEntries()
 
-    def getTime(self):
-        return self.parent.timer.time()
-
     def setTime(self, seconds):
         self.parent.timer.setTime(seconds)
 
-    def clearPuzzle(self, event):
+    def restartPuzzle(self, event):
         # Start current puzzle over
         # Do not reset the timer
 
@@ -163,6 +162,17 @@ class Control(tk.Frame):
 
         puzzle.restart()
         board.restart()
+
+    def clearPuzzle(self, event):
+        # Start current puzzle over
+        # Reset the timer
+
+        puzzle = self.parent.puzzle
+        board  = self.parent.board
+
+        puzzle.restart()
+        board.restart()
+        self.parent.timer.start()
 
     def newPuzzle(self, event):
         parent = self.parent
