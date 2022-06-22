@@ -27,6 +27,8 @@ class KenKen(object):
     def newPuzzle(self, dim):
         c = run(['./keen', '--generate', '1', f'{dim}dx'], capture_output=True)
         code = c.stdout.decode()
+        with open('code.txt', 'w') as fin:
+            fin.write(code)
         self.puzzle = Puzzle(self, code)
         self.board.draw(dim)
         self.timer.start()
