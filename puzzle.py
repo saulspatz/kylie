@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 from itertools import combinations
 import re
+import os
 from subprocess import run
 
 ADD = '+'
@@ -181,6 +182,15 @@ class Puzzle(object):
                     fout.write(f'e {vertex} {nbr}\n')
         run(['./HybridEA', '-T', '4', 'dimacs.txt'], capture_output=True)       
         coloring  = list(map(int, open('solution.txt').readlines()))[1:]
+
+
+        # remove some of the artifacts
+
+        os.remove('ceffort.txt')
+        os.remove('teffort.txt')
+        os.remove('dimacs.txt')
+        os.remove('solution.txt')
+
         if max(coloring) > 5:
             return False
         for id, color in zip(ids, coloring):
