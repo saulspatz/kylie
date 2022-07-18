@@ -70,11 +70,7 @@ class Puzzle(object):
         self.parent.control.setTime(0)            
                  
     def makeCages(self, codeString):
-        # Convert the cages codes from Tatham's representation. 
-        # Bit of a kludge.  From some misunderstanding, I got the
-        # transpose of Tatham's puzzle, and I just hacked it,
-        # rather than doing it over.   
-        
+        # Convert the cages codes from Tatham's representation.    
         dim = self.dim
         cageCode, operCode = codeString[2:].split(',')
         pattern = re.compile(r'[_abcdefghijklm]|[0-9]+')
@@ -96,17 +92,17 @@ class Puzzle(object):
             while c:
                 c -=1
                 if cursor < dim*(dim-1): 
-                    #vertical edge (no, horizontal)
+                    #vertical edge
                     row = cursor//(dim-1) 
                     col = cursor%(dim-1)   
-                    p0 =  col, row     # hack
-                    p1 =  col+1, row
+                    p0 =  row, col
+                    p1 =  row, col+1
                 else:
-                    #horizontal edge (no, vertical)
+                    #horizontal edge
                     col = cursor//(dim-1)-dim 
                     row = cursor%(dim-1) + 1
-                    p0 = col, row-1   # hack
-                    p1 = col, row
+                    p0 = row-1, col
+                    p1 = row, col
                 union = blocks[p0] | blocks[p1]
                 for cell in union:
                     blocks[cell] = union
@@ -123,7 +119,7 @@ class Puzzle(object):
             print(codeString)
             for item in cages.items():
                 print(item)
-        for id, clue  in zip(sorted(cages, key = lambda x:(x[1], x[0])), clues): # hack
+        for id, clue  in zip(sorted(cages), clues):
             cells = cages[id]
             for cell in cells:
                 self.cageID[cell] = id
