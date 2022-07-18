@@ -92,25 +92,30 @@ class Puzzle(object):
             while c:
                 c -=1
                 if cursor < dim*(dim-1): 
-                    #vertical edge
-                    row = cursor//(dim-1) 
-                    col = cursor%(dim-1)   
+                    # horizontal edge
+                    col = cursor//(dim-1) 
+                    row = cursor%(dim-1)   
                     p0 =  row, col
-                    p1 =  row, col+1
+                    p1 =  row+1, col
                 else:
-                    #horizontal edge
-                    col = cursor//(dim-1)-dim 
-                    row = cursor%(dim-1) + 1
-                    p0 = row-1, col
+                    # vertical edge
+                    row = cursor//(dim-1)-dim 
+                    col = cursor%(dim-1) + 1
+                    p0 = row, col-1
                     p1 = row, col
                 union = blocks[p0] | blocks[p1]
                 for cell in union:
                     blocks[cell] = union
                 cursor += 1
             cursor += 1
-       
+        
+        # I have the cell indices as (row, col), whereas Tatham uses
+        # (col, row).  The transpose function is used to make an 
+        # exact replica, rather than the transpose.
+        
+        transpose = lambda x: (x[1], x[0])
         cages = {}
-        cages = {b:blocks[b] for b in blocks if b== min(blocks[b])}
+        cages = {b:blocks[b] for b in blocks if b== min(blocks[b], key=transpose)}
         pattern =re.compile(r'[adms][0-9]+')
         clues = pattern.findall(operCode)
         try:
@@ -119,7 +124,7 @@ class Puzzle(object):
             print(codeString)
             for item in cages.items():
                 print(item)
-        for id, clue  in zip(sorted(cages), clues):
+        for id, clue  in zip(sorted(cages, key = transpose), clues):
             cells = cages[id]
             for cell in cells:
                 self.cageID[cell] = id
