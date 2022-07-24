@@ -2,7 +2,8 @@ from collections import defaultdict, namedtuple
 from itertools import combinations
 import re
 import os
-from subprocess import run
+from random import choice, shuffle, randint
+from subprocess import run 
 
 ADD = '+'
 SUB = '\u2212'
@@ -136,7 +137,8 @@ class Puzzle(object):
     def colorCages(self):
         '''
         Attempt to color the graph with 4 colors, using
-        algorithm HybridEA from "A Guide to Graph Colouring" by 
+        the iterated greedy algorithm 
+        from "A Guide to Graph Colouring" by 
         R.M.R. Lewis.  In the unlikely event that the resulting
         coloring uses more than 6 colors, fall back on color6
         '''
@@ -146,7 +148,7 @@ class Puzzle(object):
                 id = list(graph.keys())[0]
                 cages[id].color = 0
                 return
-            for id in graph:   # The must be a vertex of degree <= 5
+            for id in graph:   # There must be a vertex of degree <= 5
                 if len(graph[id]) < 6:
                     break
             nbrs = graph.pop(id)  # remove it from the graph
@@ -167,10 +169,20 @@ class Puzzle(object):
                 adj[u].add(v)
                 adj[v].add(u)
 
-        if self.hybrid(adj):
-            pass
-        else:
+        if not self.iteratedGreedy(adj):
             color6(adj)
+
+    def iteratedGreedy(self, adj):
+        coloring, tries = GraphColorer(adj).iteratedGreedy(50, 4)
+        colors = max(coloring.values())+1
+        with open('results.log', 'a') as fout:
+            fout.write(f"{colors} colors {tries} iteration{'s' if tries > 1 else ''}\n")
+        if colors > 6:
+            return False
+        for id, color in coloring.items():
+            self.cages[id].color = color
+        return True
+
 
     def hybrid(self, nbrs):
         # HybridEA
@@ -380,3 +392,141 @@ class Puzzle(object):
             result = max(operands) == min(operands) * cage.value
         return result
         
+class GraphColorer:
+    def __init__(self, adj: dict[set]) -> None:       
+        V = self.V = list(adj.keys())
+        self.nbrs = adj
+        self.n = len(self.V)
+        self.degree = {i: len(self.nbrs[i]) for i in V}
+        self.color = {i: 0 for i in V}
+        self.dsat = {i: 0 for i in V}
+        self.colorClass = defaultdict(set)
+
+    def choose(self, X) -> None:
+        # Return vertex with greatest degree of saturation
+        # Break ties by highest degree
+        # Break any remaining tie randomly
+  
+        deg = self.degree
+        sat = self.dsat
+        s, d = max((sat[v],deg[v]) for v in X)
+        candidates = [v for v in X if sat[v]==s and deg[v]==d]
+        return choice(candidates)
+
+    def DSatur(self) -> None:
+        X = self.V.copy()  # uncolored vertices
+        S = self.colorClass
+        nbrs = self.nbrs
+        nbrColors = defaultdict(set)
+        while X:
+            v = self.choose(X)
+            if not S:
+                S[0].add(v)
+                X.remove(v)
+                continue
+            for j in range(len(S)):
+                if not S[j] & nbrs[v]:
+                    S[j].add(v)
+                    break
+            else: # loop else
+                j += 1
+                S[j].add(v)
+            for u in nbrs[v]:
+                nbrColors[u].add(j)
+                self.dsat[u] = len(nbrColors[u])
+            X.remove(v)
+
+    def greedy(self) -> None:
+        colorClass = self.colorClass = defaultdict(set)
+        V = self.V
+        nbrs = self.nbrs
+        colorClass[0].add(V[0])
+        for v in V[1:]:
+            for c in colorClass:
+                if not (nbrs[v] & colorClass[c]):
+                    colorClass[c].add(v)
+                    break
+            else:   # loop else
+                colorClass[c+1].add(v)
+
+    def flatten(self, X:list[set]) -> list:
+        return [x for s in X for x in s]
+
+    def largestFirst(self) -> None:
+        # Reorder the vertices in order of the color classes
+        # in decreasing order of size
+
+        #print('largestFirst')
+        #old = self.V
+        c = sorted(self.colorClass.values(), key= lambda x:len(x), reverse=True)
+        self.V = self.flatten(c)
+        # if old == self.V:
+        #     print('no change')
+        #self.printV()
+
+    def reverse(self) -> None:
+        # Reorder the vertices in the reverse of the color classes
+       
+        # print('reverse')
+        # old = self.V
+        classes = self.colorClass
+        c = [classes[i] for i in range(len(classes))]
+        self.V = self.flatten(c)
+        # if old == self.V:
+        #     print('no change')
+        #self.printV()
+
+    def randomize(self) -> None:
+        # Reorder the vertices by shuffling the color classes
+       
+        # print('randomize')
+        # old = self.V
+        c = list(self.colorClass.values())
+        shuffle(c)
+        self.V = self.flatten(c)
+        # if old == self.V:
+        #     print('no change')
+        #self.printV()
+
+    def printV(self):
+        for v in self.V:
+            print(self.V, end = ' ')
+        print()
+
+    def iteratedGreedy(self, limit: int, goal:int = 0) -> tuple[dict, int]:
+        # Iterated greedy coloring
+        # limit is the maximum number of colorings to try
+        # goal is a target for the number of colors; if
+        # this goal is achieved, the coloring stops early.
+        # The default goal is 0, so there is no target
+
+        self.DSatur()    # color initially with DSatur algorithm
+        tries = 1
+        if len(self.colorClass) <= goal:
+            # Color the graph
+            colors = self.colorClass
+            self.color = {v:c for c in colors for v in colors[c]}
+            return self.color, 1
+        while tries < limit:
+            r = randint(1,13)
+
+            # Reorder the vertices according to largesrt first, reversal,
+            # or random shuffling randomly, with proportin 5:5:3, and
+            # then use the greedy algorithm
+              
+            if r <= 5:
+                self.largestFirst()
+            elif r <= 10:
+                self.reverse()
+            else:
+                self.randomize()
+            self.greedy()
+            tries += 1
+            if len(self.colorClass) <= goal:
+                break
+        colors = self.colorClass
+
+        # Color the graph
+        self.color = {v:c for c in colors for v in colors[c]}
+
+        return self.color, tries
