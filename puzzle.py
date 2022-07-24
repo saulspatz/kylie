@@ -3,7 +3,7 @@ from itertools import combinations
 import re
 import os
 from random import choice, shuffle, randint
-from subprocess import run 
+# from subprocess import run 
 
 ADD = '+'
 SUB = '\u2212'
@@ -183,36 +183,34 @@ class Puzzle(object):
             self.cages[id].color = color
         return True
 
-
-    def hybrid(self, nbrs):
-        # HybridEA, superseded by iterated greedy algorithm 
-        ids = sorted(nbrs.keys())
-        indices = {id :ids.index(id)+1 for id in ids}
-        graph = {indices[v]:[indices[v] for v in nbrs[v]] for v in nbrs}
+    # def hybrid(self, nbrs):
+    #     # HybridEA, superseded by iterated greedy algorithm 
+    #     ids = sorted(nbrs.keys())
+    #     indices = {id :ids.index(id)+1 for id in ids}
+    #     graph = {indices[v]:[indices[v] for v in nbrs[v]] for v in nbrs}
             
-        vertices = len(graph)
-        edges = sum(len(val) for val in graph.values())//2
-        with open('dimacs.txt', 'w') as fout:
-            fout.write(f'p edge {vertices} {edges}\n')
-            for vertex in graph:
-                for nbr in (n for n in graph[vertex] if n > vertex):
-                    fout.write(f'e {vertex} {nbr}\n')
-        run(['./HybridEA', '-T', '4', 'dimacs.txt'], capture_output=True)       
-        coloring  = list(map(int, open('solution.txt').readlines()))[1:]
+    #     vertices = len(graph)
+    #     edges = sum(len(val) for val in graph.values())//2
+    #     with open('dimacs.txt', 'w') as fout:
+    #         fout.write(f'p edge {vertices} {edges}\n')
+    #         for vertex in graph:
+    #             for nbr in (n for n in graph[vertex] if n > vertex):
+    #                 fout.write(f'e {vertex} {nbr}\n')
+    #     run(['./HybridEA', '-T', '4', 'dimacs.txt'], capture_output=True)       
+    #     coloring  = list(map(int, open('solution.txt').readlines()))[1:]
 
+    #     # remove some of the artifacts
 
-        # remove some of the artifacts
+    #     os.remove('ceffort.txt')
+    #     os.remove('teffort.txt')
+    #     os.remove('dimacs.txt')
+    #     os.remove('solution.txt')
 
-        os.remove('ceffort.txt')
-        os.remove('teffort.txt')
-        os.remove('dimacs.txt')
-        os.remove('solution.txt')
-
-        if max(coloring) > 5:
-            return False
-        for id, color in zip(ids, coloring):
-            self.cages[id].color = color
-        return True
+    #     if max(coloring) > 5:
+    #         return False
+    #     for id, color in zip(ids, coloring):
+    #         self.cages[id].color = color
+    #     return True
         
     def enterAnswer(self, focus, value):
         
