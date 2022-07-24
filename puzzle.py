@@ -185,7 +185,7 @@ class Puzzle(object):
 
 
     def hybrid(self, nbrs):
-        # HybridEA
+        # HybridEA, superseded by iterated greedy algorithm 
         ids = sorted(nbrs.keys())
         indices = {id :ids.index(id)+1 for id in ids}
         graph = {indices[v]:[indices[v] for v in nbrs[v]] for v in nbrs}
