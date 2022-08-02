@@ -200,10 +200,12 @@ class Board(tk.Canvas):
 
     def undo(self, update):
         self.postUpdate(update)
+        self.enterCell(update.coords)
         self.itemconfigure('cursor', state=tk.NORMAL)
 
     def redo(self, update):
         self.postUpdate(update)
+        self.enterCell(update.coords)
         if self.parent.puzzle.isCompleted():
             self.itemconfigure('cursor', state=tk.HIDDEN)
 
