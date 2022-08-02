@@ -21,11 +21,12 @@ class KenKen(object):
         self.timer = StopWatch(win)
         self.timer.pack()
         self.board.pack(side = tk.TOP, expand=tk.YES, fill=tk.BOTH)
-        dim = 9
-        self.newPuzzle(dim)  # sets self.puzzle
+        dim = 6
+        diff = 'e'
+        self.newPuzzle(dim, diff)  # sets self.puzzle
 
-    def newPuzzle(self, dim):
-        c = run(['./keen', '--generate', '1', f'{dim}dx'], capture_output=True)
+    def newPuzzle(self, dim, diff):
+        c = run(['./keen', '--generate', '1', f'{dim}d{diff}'], capture_output=True)
         code = c.stdout.decode()
         with open('code.txt', 'a') as fin:
             fin.write(code)
