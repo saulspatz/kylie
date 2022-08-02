@@ -136,26 +136,28 @@ class Board(tk.Canvas):
         for object in objects:
             self.delete(object)
 
-    def highlight(self, cells, color='yellow', num=2):
+    def flash(self, rects, num):
+        if num == 0:
+            return
+        for tag, bg, color in rects:
+            col = bg if num % 2 else color
+            self.itemconfigure(tag, fill=col)
+            self.update_idletasks()
+        self.after(100, lambda: self.flash(rects, num-1))
+
+    def highlight(self, cells, color='yellow', num = 2):
         # Flash given cells in the given highlight color, num times
         # It is assumed that the highlight color will never be the
-        # background color of a cell.
+        # background color of a cell.  
+        # Record the original background colors of the cells, so as 
+        # to be able to restore them, then call flash.
 
         rects = []
         for cell in cells:
             tag = 'rect%d%d' % cell
             bg = self.itemcget(tag, 'fill')
             rects.append((tag, bg, color))
-
-        for _ in range(num):
-            for tag, bg, col in rects:
-                self.itemconfigure(tag, fill=col)
-            self.update_idletasks()
-            time.sleep(.1)
-            for tag, bg, col in rects:
-                self.itemconfigure(tag, fill=bg)
-            self.update_idletasks()
-            time.sleep(.1)
+        self.flash(rects, 2*num)
 
     def candidateString(self, cands):
         # String representation of a list of candidates
