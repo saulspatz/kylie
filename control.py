@@ -20,19 +20,21 @@ class Control(tk.Frame):
         self.bind_class('Board', 'L',  self.arrowRight)
         self.bind_class('Board', '<ButtonPress-1>', self.onClick)
         self.bind_class('Board', '<space>',  self.clearCell)
-        self.bind_class('Board', 'u',  self.rollBack)
-        self.bind_class('Board', 'r',  self.rollForward)
+        self.bind_class('Board', 'u', self.rollBack)
+        self.bind_class('Board', 'r', self.rollForward)
         self.bind_class('Board', 's', self.restartPuzzle)
         self.bind_class('Board', 'n', self.newPuzzle)
         self.bind_class('Board', 'c', self.clearPuzzle)
-        self.bind_class('Board', 'U',  self.rollBack)
-        self.bind_class('Board', 'R',  self.rollForward)
+        self.bind_class('Board', 'o', self.openPuzzle)
+        self.bind_class('Board', 'U', self.rollBack)
+        self.bind_class('Board', 'R', self.rollForward)
         self.bind_class('Board', 'S', self.restartPuzzle)
         self.bind_class('Board', 'N', self.newPuzzle)
         self.bind_class('Board', 'C', self.clearPuzzle)
+        self.bind_class('Board', 'O', self.openPuzzle)
         self.bind_class('Board', '<Map>',  self.map)
         self.bind_class('Board', '<Unmap>',  self.unmap)
-
+        
         for c in range(1, 10):
             self.bind_class('Board',f'<KeyPress-{c}>',  self.toggleCandidate)
             self.bind_class('Board',f'<Control-KeyPress-{c}>',  self.enterAnswer)
@@ -195,3 +197,12 @@ class Control(tk.Frame):
             if not kill:
                 return
         parent.newPuzzle(dim)
+
+    def openPuzzle(self, event):
+        parent = self.parent
+        if not parent.puzzle.isCompleted():
+            kill = messagebox.askyesno('Unfinished', 'Discard incomplete puzzle?')
+            if not kill:
+                return
+        parent.openPuzzle()
+

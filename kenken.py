@@ -2,6 +2,7 @@
 ''' Graphic user interface for kenken puzzle. 
 '''
 import tkinter as tk
+from tkinter import filedialog
 from subprocess import run
 
 from control   import Control
@@ -28,9 +29,24 @@ class KenKen(object):
         code = c.stdout.decode()
         with open('code.txt', 'w') as fin:
             fin.write(code)
+        self.puzzleFromCode(code)
+        
+    def openPuzzle(self):
+        fn = filedialog.askopenfilename(parent=self.win,
+                                        title='Open Saved Puzzle',
+                                        initialdir='.',
+                                        filetypes=[('TXT','*.txt')])
+        if not fn:
+            return
+        code = open(fn).read()
+        self.puzzleFromCode(code)
+        
+    def puzzleFromCode(self, code):
+        dim = int(code[0])
         self.puzzle = Puzzle(self, code)
         self.board.draw(dim)
         self.timer.start()
+
                     
 def main():
     root = tk.Tk()                             
