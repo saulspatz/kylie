@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 ''' Graphic user interface for kenken puzzle. 
 '''
 import tkinter as tk
@@ -26,7 +26,7 @@ class KenKen(object):
     def newPuzzle(self, dim=9, diff='x'):
         c = run(['./keen', '--generate', '1', f'{dim}d{diff}'], capture_output=True)
         code = c.stdout.decode()
-        with open('code.txt', 'a') as fin:
+        with open('code.txt', 'w') as fin:
             fin.write(code)
         self.puzzle = Puzzle(self, code)
         self.board.draw(dim)
