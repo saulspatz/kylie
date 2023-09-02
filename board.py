@@ -138,11 +138,15 @@ class Board(tk.Canvas):
 
     def flash(self, rects, num):
         if num == 0:
+            # switch to bg color in case we missed an event
+            for tag, bg, color in rects:
+                self.itemconfigure(tag, fill=bg)
+            self.update_idletasks()
             return
         for tag, bg, color in rects:
             col = bg if num % 2 else color
             self.itemconfigure(tag, fill=col)
-            self.update_idletasks()
+        self.update_idletasks()
         self.after(100, lambda: self.flash(rects, num-1))
 
     def highlight(self, cells, color='yellow', num = 2):
