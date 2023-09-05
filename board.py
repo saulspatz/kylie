@@ -138,10 +138,6 @@ class Board(tk.Canvas):
 
     def flash(self, rects, num):
         if num == 0:
-            # switch to bg color in case we missed an event
-            for tag, bg, color in rects:
-                self.itemconfigure(tag, fill=bg)
-            self.update_idletasks()
             return
         for tag, bg, color in rects:
             col = bg if num % 2 else color
@@ -162,6 +158,14 @@ class Board(tk.Canvas):
             bg = self.itemcget(tag, 'fill')
             rects.append((tag, bg, color))
         self.flash(rects, 2*num)
+
+        # Very occasionally we end up with a cell colored wrong.
+        # I can't understand what causes this, so I'm just explicitly
+        # putting eveything bcak to the right color at the end.
+
+        for tag, bg, _ in rects:
+            self.itemconfigure(tag, fill=bg)
+        self.update_idletasks()
 
     def candidateString(self, cands):
         # String representation of a list of candidates
