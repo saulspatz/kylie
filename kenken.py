@@ -3,7 +3,6 @@
 '''
 import tkinter as tk
 from tkinter import filedialog
-from subprocess import run
 
 from control   import Control
 from board     import Board
@@ -63,8 +62,6 @@ class KenKen(object):
                 sizes[diff,dim] = count+1
         return sizes
 
-
-                    
 def main():
     root = tk.Tk()                             
     KenKen(root)
