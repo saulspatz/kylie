@@ -2,7 +2,6 @@ keen
 __pycache__
 *.pyc
 .vscode
-*.txt
 *.log
 HybridEA
 
