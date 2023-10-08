@@ -21,7 +21,10 @@ class PopUp(simpledialog.Dialog):
             ('6', '7', '8', '9'), parent.dimension)
         rb1.grid(row = 0, column = 0)
         rb2.grid(row = 0, column = 1)
-        return frame
+        return rb1
+    
+    def apply(self):
+        dim = self.parent.newPuzzle()
         
 root = tk.Tk()
 root.difficulty = tk.IntVar(root)
